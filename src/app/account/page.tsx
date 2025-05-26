@@ -6,7 +6,7 @@ import { auth } from "../firebase";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
-  const [user, loading, error] = useAuthState(auth);
+  const [user, _loading, _error] = useAuthState(auth);
   const router = useRouter();
 
   if (errorOut) {

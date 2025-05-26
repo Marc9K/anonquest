@@ -8,7 +8,7 @@ import { useEffect } from "react";
 export default function LogIn() {
   const [signInWithGoogle, user, loadingIn, errorIn] =
     useSignInWithGoogle(auth);
-  const [logedUser, loading, error] = useAuthState(auth);
+  const [logedUser, _loading, _error] = useAuthState(auth);
   const router = useRouter();
 
   useEffect(() => {
