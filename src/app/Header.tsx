@@ -1,11 +1,20 @@
+"use client";
+
 import Link from "next/link";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./firebase";
 
 export default function Header() {
+  const [user, loading, error] = useAuthState(auth);
   return (
-    <header style={{ padding: "1rem", borderBottom: "1px solid #ccc" }}>
-      <nav style={{ display: "flex", gap: "1rem" }}>
+    <header>
+      <nav>
         <Link href="/">Home</Link>
-        <Link href="/login">Log In</Link>
+        {user ? (
+          <Link href="/account">Account</Link>
+        ) : (
+          <Link href="/login">Log In</Link>
+        )}
       </nav>
     </header>
   );
