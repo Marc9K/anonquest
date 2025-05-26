@@ -1,13 +1,21 @@
 "use client";
 
-import { useSignInWithGoogle } from "react-firebase-hooks/auth";
+import { useAuthState, useSignInWithGoogle } from "react-firebase-hooks/auth";
 import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LogIn() {
   const [signInWithGoogle, user, loadingIn, errorIn] =
     useSignInWithGoogle(auth);
+  const [logedUser, loading, error] = useAuthState(auth);
   const router = useRouter();
+
+  useEffect(() => {
+    if (user || logedUser) {
+      router.replace("/account");
+    }
+  }, [user]);
 
   if (errorIn) {
     return (
@@ -19,21 +27,21 @@ export default function LogIn() {
   if (loadingIn) {
     return <p>Loading...</p>;
   }
-  if (user) {
-    return (
-      <div>
-        <p>Signed In User: {user.providerId}</p>
-        <p>Signed In User: {user.user.email}</p>
-        <p>Signed In User: {user.user.displayName}</p>
-      </div>
-    );
+  if (user || logedUser) {
+    return null;
+    //   (
+    //   <div>
+    //     <p>Signed In User: {user?.providerId ?? logedUser?.providerId}</p>
+    //     <p>Signed In User: {user?.user.email ?? logedUser?.email}</p>
+    //     <p>Signed In User: {user?.user.displayName}</p>
+    //   </div>
+    // );
   }
   return (
     <div>
       <button
         onClick={async () => {
           await signInWithGoogle();
-          router.push("/account");
         }}
       >
         Sign in with Google

@@ -25,7 +25,7 @@ export default function Account() {
       <p>Signed In User: {user?.email}</p>
       <button
         onClick={async () => {
-          //   await signOut();
+          await signOut();
           router.push("/");
         }}
       >
