@@ -1,3 +1,4 @@
+import { Provider } from "@/components/ui/provider";
 import type { Metadata } from "next";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
@@ -13,9 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ClientLayout>{children}</ClientLayout>
+        <Provider>
+          <ClientLayout>{children}</ClientLayout>
+        </Provider>
       </body>
     </html>
   );
