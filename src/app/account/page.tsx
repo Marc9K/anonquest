@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 
 import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
 import { auth } from "../firebase";
+import { Button } from "@chakra-ui/react";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
@@ -22,15 +23,16 @@ export default function Account() {
 
   return (
     <div>
-      <p>Signed In User: {user?.email}</p>
-      <button
+      <p>Hello {user?.displayName}</p>
+      <Button
+        variant="outline"
         onClick={async () => {
           await signOut();
           router.push("/");
         }}
       >
         Sign Out
-      </button>
+      </Button>
     </div>
   );
 }
