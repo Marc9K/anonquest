@@ -1,51 +1,30 @@
 "use client";
 
-import { useAuthState, useSignInWithGoogle } from "react-firebase-hooks/auth";
 import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { AbsoluteCenter } from "@chakra-ui/react";
 
 export default function LogIn() {
-  const [signInWithGoogle, user, loadingIn, errorIn] =
-    useSignInWithGoogle(auth);
-  const [logedUser, ,] = useAuthState(auth);
+  // const [logedUser, ,] = useAuthState(auth);
   const router = useRouter();
 
-  useEffect(() => {
-    if (user || logedUser) {
-      router.replace("/account");
-    }
-  }, [user]);
-
-  if (errorIn) {
-    return (
-      <div>
-        <p>Error: {errorIn?.message}</p>
-      </div>
-    );
-  }
-  if (loadingIn) {
-    return <p>Loading...</p>;
-  }
-  if (user || logedUser) {
-    return null;
-    //   (
-    //   <div>
-    //     <p>Signed In User: {user?.providerId ?? logedUser?.providerId}</p>
-    //     <p>Signed In User: {user?.user.email ?? logedUser?.email}</p>
-    //     <p>Signed In User: {user?.user.displayName}</p>
-    //   </div>
-    // );
-  }
   return (
-    <div>
-      <button
-        onClick={async () => {
-          await signInWithGoogle();
+    <AbsoluteCenter>
+      <GoogleLogin
+        onSuccess={async (response: CredentialResponse) => {
+          if (!response.credential) return;
+          const credential = GoogleAuthProvider.credential(response.credential);
+          await signInWithCredential(auth, credential);
+          router.replace("/account");
         }}
-      >
-        Sign in with Google
-      </button>
-    </div>
+        onError={() => {
+          console.log("Login Failed");
+        }}
+        useOneTap
+        auto_select
+      />
+    </AbsoluteCenter>
   );
 }

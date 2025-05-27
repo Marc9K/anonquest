@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "./Header";
+import Header from "./_header/Header";
 
 export default function ClientLayout({
   children,
