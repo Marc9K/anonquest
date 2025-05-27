@@ -4,7 +4,7 @@ import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { AbsoluteCenter, Center } from "@chakra-ui/react";
+import { AbsoluteCenter } from "@chakra-ui/react";
 
 export default function LogIn() {
   // const [logedUser, ,] = useAuthState(auth);
