@@ -9,12 +9,14 @@ import { collection, query, where } from "firebase/firestore";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
-  const [user, ,] = useAuthState(auth);
+  const [user] = useAuthState(auth);
   const router = useRouter();
 
   const surveysRef = collection(db, "surveys");
 
-  const q = user ? query(surveysRef, where("ownerId", "==", user.uid)) : null;
+  const q = user
+    ? query(surveysRef, where("ownerEmail", "==", user.email))
+    : null;
 
   const [snapshot, loading, error] = useCollection(q);
 
