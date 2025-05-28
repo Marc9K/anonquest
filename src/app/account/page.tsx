@@ -2,13 +2,21 @@
 import { useRouter } from "next/navigation";
 
 import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
-import { auth } from "../firebase";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { auth, db } from "../firebase";
 import { Button } from "@chakra-ui/react";
+import { collection, query, where } from "firebase/firestore";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
   const [user, ,] = useAuthState(auth);
   const router = useRouter();
+
+  const surveysRef = collection(db, "surveys");
+
+  const q = user ? query(surveysRef, where("ownerId", "==", user.uid)) : null;
+
+  const [snapshot, loading, error] = useCollection(q);
 
   if (errorOut) {
     return (
@@ -24,6 +32,18 @@ export default function Account() {
   return (
     <div>
       <p>Hello {user?.displayName}</p>
+      <ul>
+        {snapshot?.docs.map((doc) => (
+          <li key={doc.id}>{doc.data().title}</li>
+        ))}
+      </ul>
+      <Button
+        onClick={async () => {
+          router.push("/survey");
+        }}
+      >
+        New survey
+      </Button>
       <Button
         variant="outline"
         onClick={async () => {
