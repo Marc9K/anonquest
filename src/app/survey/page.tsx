@@ -2,34 +2,40 @@
 
 import { useAuthState } from "react-firebase-hooks/auth";
 
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { useRef, useState } from "react";
-import {
-  Button,
-  Field,
-  Fieldset,
-  Group,
-  Icon,
-  Input,
-  Stack,
-  Textarea,
-} from "@chakra-ui/react";
+import { useEffect, useRef, useState } from "react";
+import { Button, Fieldset } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { TbCsv } from "react-icons/tb";
 import CreateQuestionCard from "./CreateQuestionCard";
-import { FirestoreQuestion, FirestoreSurvey } from "@/interfaces/firestore";
+import {
+  FirestoreAnswer,
+  FirestoreQuestion,
+  FirestoreSurvey,
+} from "@/interfaces/firestore";
 import FieldInput from "@/components/FieldInput";
+import FieldTextArea from "@/components/FieldTextArea";
 
-export default function CreateSurvey() {
+export default function CreateSurvey({
+  existing,
+}: {
+  existing?: { survey: FirestoreSurvey; id: string };
+}) {
   const [user] = useAuthState(auth);
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [questions, setQuestions] = useState<FirestoreQuestion[]>([]);
-  console.log(questions);
+  const [questions, setQuestions] = useState<FirestoreQuestion[]>(
+    existing?.survey.questions?.map((question) => ({
+      ...question,
+      origTitle: question.title,
+    })) ?? []
+  );
+  const [deletedQuestions, setDeletedQuestion] = useState<FirestoreQuestion[]>(
+    []
+  );
 
   const get = (name: string) => {
-    if (!formRef || !formRef.current) return "";
+    if (!formRef.current) return "";
     const formData = new FormData(formRef.current);
     return formData.get(name)?.toString() || "";
   };
@@ -46,12 +52,31 @@ export default function CreateSurvey() {
       description: "",
     };
 
-    const surveyRef = doc(collection(db, "surveys"));
+    const surveyRef = existing?.id
+      ? doc(db, "surveys", existing.id)
+      : doc(collection(db, "surveys"));
     await setDoc(surveyRef, surveyData);
     const questionsCollectionRef = collection(surveyRef, "questions");
 
+    if (existing) {
+      await Promise.all(
+        deletedQuestions.map(async (deleted) => {
+          if (deleted.origTitle) {
+            return deleteDoc(doc(surveyRef, "questions", deleted.origTitle));
+          }
+        })
+      );
+    }
+
     for (const question of questions) {
       const questionRef = doc(questionsCollectionRef, question.title);
+      if (existing && question.deletedAnswers) {
+        await Promise.all(
+          question.deletedAnswers.map((deleted: FirestoreAnswer) => {
+            return deleteDoc(doc(questionRef, "answers", deleted.origTitle));
+          })
+        );
+      }
 
       const questionData: FirestoreQuestion = {
         description: question.description,
@@ -61,7 +86,6 @@ export default function CreateSurvey() {
 
         const answersCollectionRef = collection(questionRef, "answers");
         for (const answer of question.answers ?? []) {
-          console.log(answer);
           const answerRef = doc(answersCollectionRef, answer.title);
           await setDoc(answerRef, { count: 0 });
         }
@@ -87,29 +111,20 @@ export default function CreateSurvey() {
           <Fieldset.Content>
             <FieldInput
               label="Title"
-              initialValue={get("title")}
+              initialValue={existing?.survey.title ?? get("title")}
               name="title"
               required
             />
 
-            <Field.Root>
-              <Field.Label>Participants' emails</Field.Label>
-              <Group attached>
-                <Textarea
-                  name="emails"
-                  placeholder="e1@mail.co, e2@mail.co, ..."
-                />
-                <Button bg="bg.subtle" variant="outline">
-                  Upload
-                  <Icon>
-                    <TbCsv />
-                  </Icon>
-                </Button>
-              </Group>
-              <Field.HelperText>
-                Please provide comma separated emails
-              </Field.HelperText>
-            </Field.Root>
+            <FieldTextArea
+              placeholder="e1@mail.co, e2@mail.co, ..."
+              name="emails"
+              initialValue={
+                existing?.survey.participants.join(", ") ?? get("emails")
+              }
+              label="Participants' emails"
+              helper="Please provide comma separated emails"
+            />
             {questions.map((question) => (
               <CreateQuestionCard
                 key={question.title}
@@ -118,12 +133,20 @@ export default function CreateSurvey() {
                   const oldQuestions = questions.filter(
                     (q) => q.title !== question.title
                   );
+                  if (!newQuestion) {
+                    setDeletedQuestion((prev) => [...prev, question]);
+                    setQuestions((prev) =>
+                      prev.filter((q) => q.title !== question.title)
+                    );
+                    return;
+                  }
                   if (oldQuestions.find((q) => q.title === newQuestion?.title))
                     throw new Error("Question with that title already exists");
-                  if (newQuestion) {
-                    console.log(newQuestion);
-                    oldQuestions.push(newQuestion);
-                  }
+                  const questionIndex = questions.findIndex(
+                    (q) => q.title === question.title
+                  );
+                  console.log(newQuestion);
+                  oldQuestions.splice(questionIndex, 1, newQuestion);
                   setQuestions(oldQuestions);
                 }}
               />

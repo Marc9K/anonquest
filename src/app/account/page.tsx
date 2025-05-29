@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
-import { Button } from "@chakra-ui/react";
+import { Button, Link as ChakraLink, List } from "@chakra-ui/react";
 import { collection, query, where } from "firebase/firestore";
+import Link from "next/link";
+import SurveyLink from "./SurveyLink";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
@@ -34,11 +36,13 @@ export default function Account() {
   return (
     <div>
       <p>Hello {user?.displayName}</p>
-      <ul>
+      <List.Root gap="2">
         {snapshot?.docs.map((doc) => (
-          <li key={doc.id}>{doc.data().title}</li>
+          <List.Item key={doc.id}>
+            <SurveyLink doc={doc} />
+          </List.Item>
         ))}
-      </ul>
+      </List.Root>
       <Button
         onClick={async () => {
           router.push("/survey");

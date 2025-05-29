@@ -25,16 +25,21 @@ export default function CreateQuestionCard({
   setQuestion: (question: FirestoreQuestion | null) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [answers, setAnswers] = useState(question.answers);
+  const [answers, setAnswers] = useState(
+    question.answers?.map((a) => ({ ...a, origTitle: a.title }))
+  );
   const inputRef = useRef(null);
+  const [deletedAnswers, setDeletedAnswers] = useState<FirestoreAnswer[]>([]);
   return (
     <Card.Root
       size="lg"
       onBlur={() => {
+        console.log("Blur Question Card");
         const formData = new FormData(formRef.current);
         const title = formData.get("title")?.toString() || "";
         const description = formData.get("description")?.toString() || "";
-        setQuestion({ title, description, answers });
+
+        setQuestion({ title, description, answers, deletedAnswers });
       }}
     >
       <form ref={formRef}>
@@ -78,8 +83,9 @@ export default function CreateQuestionCard({
                       );
                       if (option) {
                         oldAnswers.push(option);
+                      } else {
+                        setDeletedAnswers((prev) => [...prev, answer]);
                       }
-                      console.log(oldAnswers);
                       setAnswers(oldAnswers);
                     }}
                   />
