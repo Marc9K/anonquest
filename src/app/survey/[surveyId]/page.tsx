@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import CreateSurvey from "../page";
+import AnswerSurveyForm from "./AnswerSurveyForm";
 
 async function fetch(surveyId: string) {
   try {
@@ -58,6 +59,7 @@ async function fetch(surveyId: string) {
 
 export default function EditingSurvey() {
   const surveyId = useParams()?.surveyId as string;
+  const [user] = useAuthState(auth);
   const [snap, setSnap] = useState<
     | {
         survey: FirestoreSurvey;
@@ -76,13 +78,16 @@ export default function EditingSurvey() {
   if (!snap) {
     return <>Loading...</>;
   }
-
-  return (
-    <CreateSurvey
-      existing={{
-        survey: snap.survey,
-        id: snap.id,
-      }}
-    />
-  );
+  if (user?.email === snap.survey.ownerEmail) {
+    return (
+      <CreateSurvey
+        existing={{
+          survey: snap.survey,
+          id: snap.id,
+        }}
+      />
+    );
+  } else {
+    return <AnswerSurveyForm snap={snap} />;
+  }
 }
