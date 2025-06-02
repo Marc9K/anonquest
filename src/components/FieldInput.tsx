@@ -11,12 +11,12 @@ export default function FieldInput({
   ref,
 }: {
   name: string;
-  initialValue: string;
+  initialValue?: string;
   label: string;
   required?: boolean;
   ref?: Ref<HTMLInputElement>;
 }) {
-  const [text, setText] = useState(initialValue);
+  const [text, setText] = useState(initialValue ?? "");
   return (
     <Field.Root required={required}>
       <Field.Label>

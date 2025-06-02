@@ -1,11 +1,8 @@
 import { FirestoreQuestion } from "@/interfaces/firestore";
+import Question from "@/model/Question";
 import { Card, NativeSelect, Text } from "@chakra-ui/react";
 
-export default function QuestionCard({
-  question,
-}: {
-  question: FirestoreQuestion;
-}) {
+export default function QuestionCard({ question }: { question: Question }) {
   return (
     <Card.Root>
       <Card.Title>

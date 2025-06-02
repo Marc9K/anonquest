@@ -16,3 +16,7 @@ export interface FirestoreAnswer {
   title: string;
   count: number;
 }
+
+export interface Loadable {
+  load(): Promise<void>;
+}

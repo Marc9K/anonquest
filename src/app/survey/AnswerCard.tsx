@@ -1,6 +1,7 @@
 "use client";
 
 import { FirestoreAnswer } from "@/interfaces/firestore";
+import Answer from "@/model/Answer";
 import { Button, Flex, Group, Input } from "@chakra-ui/react";
 import { Ref, useState } from "react";
 
@@ -9,15 +10,15 @@ export default function AnswerCard({
   setOption,
   ref,
 }: {
-  option: FirestoreAnswer;
-  setOption: (option: FirestoreAnswer | null) => void;
+  option: Answer;
+  setOption: (option: Answer | null) => void;
   ref?: Ref<HTMLInputElement>;
 }) {
   const [text, setText] = useState(option.title);
 
   const handleFinish = () => {
     try {
-      setOption({ title: text, count: 0 });
+      setOption(option.renaming(text));
     } catch (error) {
       setText(option.title);
     }

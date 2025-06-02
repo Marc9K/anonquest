@@ -11,12 +11,12 @@ export default function FieldTextArea({
   helper,
 }: {
   name: string;
-  initialValue: string;
+  initialValue?: string;
   label: string;
   placeholder?: string;
   helper?: string;
 }) {
-  const [text, setText] = useState(initialValue);
+  const [text, setText] = useState(initialValue ?? "");
   return (
     <Field.Root>
       <Field.Label>{label}</Field.Label>
