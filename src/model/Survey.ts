@@ -109,35 +109,33 @@ export default class Survey implements Loadable {
       );
     }
 
-    for (const question of this.questions ?? []) {
-      const questionRef = doc(questionsCollectionRef, question.title);
-      console.log(question.answersToDelete);
-      if (this.ref && question.answersToDelete) {
-        await Promise.all(
-          question.answersToDelete.map(async (deleted: Answer) => {
-            if (deleted._title) {
-              return await deleteDoc(
-                doc(questionRef, "answers", deleted._title)
-              );
-            }
-          })
-        );
-      }
-
-      const questionData: FirestoreQuestion = {
-        description: question.description ?? "",
-      };
-      try {
-        await setDoc(questionRef, questionData);
+    console.log(this.questions);
+    try {
+      for (const question of this.questions ?? []) {
+        const questionRef = doc(questionsCollectionRef, question.title);
+        if (this.ref && question.answersToDelete) {
+          await Promise.all(
+            question.answersToDelete.map(async (deleted: Answer) => {
+              if (deleted._title) {
+                return await deleteDoc(
+                  doc(questionRef, "answers", deleted._title)
+                );
+              }
+            })
+          );
+        }
+        await setDoc(questionRef, {
+          description: question.description ?? "",
+        });
 
         const answersCollectionRef = collection(questionRef, "answers");
         for (const answer of question.answers ?? []) {
           const answerRef = doc(answersCollectionRef, answer.title);
           await setDoc(answerRef, { count: 0 });
         }
-      } catch (e) {
-        console.error("Error adding answer: ", e);
       }
+    } catch (e) {
+      console.error("Error adding answer: ", e);
     }
 
     this.ref = surveyRef;

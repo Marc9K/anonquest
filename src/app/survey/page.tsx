@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebase";
 import { useRef, useState } from "react";
 import { Button, Fieldset } from "@chakra-ui/react";
@@ -10,9 +9,10 @@ import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
 import Survey from "@/model/Survey";
 import Question from "@/model/Question";
+import useAuth from "@/hooks/useAuth";
 
 export default function CreateSurvey({ existing }: { existing?: Survey }) {
-  const [user] = useAuthState(auth);
+  const [user] = useAuth();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [survey, setSurvey] = useState(existing ?? new Survey());

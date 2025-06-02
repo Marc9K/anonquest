@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
+import { useSignOut } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
 import {
@@ -15,10 +15,11 @@ import {
 import { collection, query, where } from "firebase/firestore";
 import Link from "next/link";
 import SurveyLink from "./SurveyLink";
+import useAuth from "@/hooks/useAuth";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
-  const [user] = useAuthState(auth);
+  const [user] = useAuth();
   const router = useRouter();
 
   const surveysRef = collection(db, "surveys");

@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../firebase";
+import useAuth from "@/hooks/useAuth";
 import Link from "./Link";
 import { Flex } from "@chakra-ui/react";
 
 export default function Header() {
-  const [user, ,] = useAuthState(auth);
+  const [user] = useAuth();
+  console.log(user);
   return (
     <header>
       <nav>

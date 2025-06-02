@@ -1,15 +1,14 @@
 "use client";
-import { auth, db } from "@/app/firebase";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
 import CreateSurvey from "../page";
 import AnswerSurveyForm from "./AnswerSurveyForm";
 import Survey from "@/model/Survey";
+import useAuth from "@/hooks/useAuth";
 
 export default function EditingSurvey() {
   const surveyId = useParams()?.surveyId as string;
-  const [user] = useAuthState(auth);
+  const [user] = useAuth();
   const [survey, setSurvey] = useState<Survey | null | undefined>(null);
 
   useEffect(() => {

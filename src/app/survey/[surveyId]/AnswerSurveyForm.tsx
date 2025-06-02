@@ -1,15 +1,14 @@
 import { Button, Stack, Text } from "@chakra-ui/react";
 import QuestionCard from "./QuestionCard";
 import { useRef } from "react";
-import { auth } from "@/app/firebase";
 import { useRouter } from "next/navigation";
-import { useAuthState } from "react-firebase-hooks/auth";
 import Survey from "@/model/Survey";
+import useAuth from "@/hooks/useAuth";
 
 export default function AnswerSurveyForm({ survey }: { survey: Survey }) {
   const formRef = useRef(null);
   const navigate = useRouter();
-  const [user] = useAuthState(auth);
+  const [user] = useAuth();
   return (
     <form
       ref={formRef}
