@@ -180,8 +180,9 @@ export default class Survey implements Loadable {
   }
 
   addingQuestion(question?: Question) {
-    this.addQuestion(question);
-    return this.copy;
+    const copy = this.copy;
+    copy.addQuestion(question);
+    return copy;
   }
 
   deleteQuestion(question: Question) {
@@ -195,21 +196,22 @@ export default class Survey implements Loadable {
     const oldQuestions =
       this.questions?.filter((q) => !q.equals(question)) ?? [];
     if (oldQuestions.find((q) => q.equals(newQuestion))) return this;
-
-    const questionIndex = this.questions?.findIndex((q) => q.equals(question));
+    const copy = this.copy;
+    const questionIndex = copy.questions?.findIndex((q) => q.equals(question));
 
     if (questionIndex) {
-      this.questions?.splice(questionIndex, 1, newQuestion);
+      copy.questions?.splice(questionIndex, 1, newQuestion);
 
-      return this.copy;
+      return copy.copy;
     }
 
-    return this;
+    return copy;
   }
 
   deletingQuestion(question: Question) {
-    this.deleteQuestion(question);
-    return this.copy;
+    const copy = this.copy;
+    copy.deleteQuestion(question);
+    return copy;
   }
 
   get isLocal() {

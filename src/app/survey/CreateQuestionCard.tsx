@@ -71,7 +71,7 @@ export default function CreateQuestionCard({
               <Stack>
                 {questionState.answers?.map((answer) => (
                   <AnswerCard
-                    ref={answer.title.length === 0 ? inputRef : undefined}
+                    // ref={answer.title.length === 0 ? inputRef : undefined}
                     key={answer.title}
                     option={answer}
                     setOption={(option) => {

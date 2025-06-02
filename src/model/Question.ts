@@ -32,8 +32,9 @@ export default class Question implements Loadable {
   }
 
   deleting(answer: Answer) {
-    this.delete(answer);
-    return this.copy;
+    const copy = this.copy;
+    copy.delete(answer);
+    return copy;
   }
 
   async load() {
@@ -88,18 +89,20 @@ export default class Question implements Loadable {
   }
 
   addingOption() {
-    if (this.hasVacantOption) return this;
-    this.answers?.push(new Answer());
-    return this.copy;
+    if (this.hasVacantOption) return this.copy;
+    const copy = this.copy;
+    copy.answers?.push(new Answer());
+    return copy;
   }
 
   replacing(answer: Answer, newAnswer: Answer) {
+    const copy = this.copy;
     if (this.answers?.find((answer) => answer.equals(newAnswer))) return this;
 
-    const index = this.answers?.findIndex((a) => a.equals(answer));
+    const index = copy.answers?.findIndex((a) => a.equals(answer));
 
-    this.answers?.splice(index!, 1, newAnswer);
+    copy.answers?.splice(index!, 1, newAnswer);
 
-    return this.copy;
+    return copy;
   }
 }
