@@ -32,7 +32,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
           if (formRef.current && user?.email) {
             await survey.save(new FormData(formRef.current), user?.email);
           }
-          router.push("/account");
+          router.push("/yours");
         }}
       >
         <Fieldset.Root size="lg" maxW="md">

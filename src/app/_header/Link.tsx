@@ -9,7 +9,7 @@ export default function Link({
   children: React.ReactNode | React.ReactNode[];
 }) {
   return (
-    <Button asChild variant="subtle" size="lg">
+    <Button asChild variant="subtle" size="lg" margin={1}>
       <ChakraLink asChild>
         <NextLink href={href}>{children}</NextLink>
       </ChakraLink>

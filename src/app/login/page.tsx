@@ -21,7 +21,7 @@ export default function LogIn() {
           if (!response.credential) return;
           const credential = GoogleAuthProvider.credential(response.credential);
           await signInWithCredential(auth, credential);
-          router.replace("/account");
+          router.replace("/yours");
         }}
         onError={() => {
           console.log("Login Failed");
@@ -33,7 +33,7 @@ export default function LogIn() {
         <button
           onClick={() => {
             signInWithEmailAndPassword(auth, "test@test.org", "testpass");
-            router.replace("/account");
+            router.replace("/yours");
           }}
         >
           test sign in

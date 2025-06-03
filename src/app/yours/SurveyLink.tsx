@@ -5,12 +5,13 @@ import { FirestoreSurvey } from "@/interfaces/firestore";
 
 export default function SurveyLink({
   doc,
+  ...args
 }: {
   doc: QueryDocumentSnapshot<DocumentData, DocumentData>;
 }) {
   const data = doc.data() as FirestoreSurvey;
   return (
-    <ChakraLink asChild>
+    <ChakraLink asChild {...args}>
       <Link href={`/survey/${doc.id}`}>
         <Card.Root>
           <Card.Title>{data.title}</Card.Title>

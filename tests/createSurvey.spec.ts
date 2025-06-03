@@ -14,7 +14,7 @@ async function auth(page: Page) {
 }
 
 async function createSurvey(page: Page) {
-  await page.goto("http://localhost:3000/account");
+  await page.goto("http://localhost:3000/yours");
   await page.getByRole("button", { name: "New survey" }).click();
 }
 

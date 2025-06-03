@@ -17,7 +17,7 @@ export default function AnswerSurveyForm({ survey }: { survey: Survey }) {
         if (!user?.email || !formRef.current) return;
         const formData = new FormData(formRef.current);
         await survey.submit(formData, user?.email);
-        navigate.push("/account");
+        navigate.push("/yours");
       }}
     >
       <Stack gap={3}>
