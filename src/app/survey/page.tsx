@@ -53,8 +53,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               label="Participants' emails"
               helper="Please provide comma separated emails"
             />
-            {survey.questions?.map((question) => (
+            {survey.questions?.map((question, index) => (
               <CreateQuestionCard
+                index={index}
                 key={question.title}
                 question={question}
                 setQuestion={(newQuestion) => {
@@ -77,7 +78,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
             </Button>
           </Fieldset.Content>
 
-          <Button type="submit" alignSelf="flex-start">
+          <Button type="submit" alignSelf="flex-start" marginBottom={50}>
             {survey.isLocal ? "Create Survey" : "Update Survey"}
           </Button>
         </Fieldset.Root>

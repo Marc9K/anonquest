@@ -3,7 +3,11 @@
 import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { AbsoluteCenter } from "@chakra-ui/react";
 
 export default function LogIn() {
@@ -25,6 +29,16 @@ export default function LogIn() {
         useOneTap
         auto_select
       />
+      {process.env.NEXT_PUBLIC_IS_TEST && (
+        <button
+          onClick={() => {
+            signInWithEmailAndPassword(auth, "test@test.org", "testpass");
+            router.replace("/account");
+          }}
+        >
+          test sign in
+        </button>
+      )}
     </AbsoluteCenter>
   );
 }

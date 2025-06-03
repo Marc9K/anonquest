@@ -22,9 +22,11 @@ import Answer from "@/model/Answer";
 export default function CreateQuestionCard({
   question,
   setQuestion,
+  index,
 }: {
   question: Question;
   setQuestion: (question: Question | null) => void;
+  index: number;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef(null);
@@ -43,7 +45,7 @@ export default function CreateQuestionCard({
         setQuestion(questionState);
       }}
     >
-      <form ref={formRef}>
+      <form ref={formRef} data-testid={`${index}-question-card`}>
         <Fieldset.Root size="lg" maxW="md">
           <Card.Header>
             <Fieldset.Legend>Select an option</Fieldset.Legend>

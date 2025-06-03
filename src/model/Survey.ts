@@ -146,6 +146,7 @@ export default class Survey implements Loadable {
     if (!this.ref) throw new Error("No ref found");
     const questionsRef = collection(this.ref, "questions");
     const questionsSnap = await getDocs(questionsRef);
+    console.log(7);
     const questionsLoaders = questionsSnap.docs.map(async (q) => {
       const question = new Question(q);
       await question.load();
