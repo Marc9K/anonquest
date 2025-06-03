@@ -54,6 +54,7 @@ export default function CreateQuestionCard({
             <Card.Body>
               <Card.Title>
                 <FieldInput
+                  data-testid={`question-title`}
                   label="Question"
                   name="title"
                   initialValue={question.title}
@@ -62,6 +63,7 @@ export default function CreateQuestionCard({
               </Card.Title>
               <Card.Description>
                 <FieldTextArea
+                  data-testid={`question-description`}
                   label="Description"
                   name="description"
                   initialValue={question.description}
@@ -71,8 +73,9 @@ export default function CreateQuestionCard({
                 <Field.Label>Answer options</Field.Label>
               </Field.Root>
               <Stack>
-                {questionState.answers?.map((answer) => (
+                {questionState.answers?.map((answer, index) => (
                   <AnswerCard
+                    data-testid={`question-answer-option`}
                     // ref={answer.title.length === 0 ? inputRef : undefined}
                     key={answer.title}
                     option={answer}
@@ -90,9 +93,17 @@ export default function CreateQuestionCard({
                 ))}
               </Stack>
             </Card.Body>
-            <Card.Footer>
+            <Card.Footer justifyContent="space-between">
               <Button
-                alignSelf="flex-start"
+                color="red"
+                variant="subtle"
+                onClick={() => {
+                  setQuestion(null);
+                }}
+              >
+                Delete question
+              </Button>
+              <Button
                 onClick={() => {
                   setQuestionState((prev) => prev.addingOption());
                   // setTimeout(() => {
@@ -102,14 +113,6 @@ export default function CreateQuestionCard({
                 disabled={question.hasVacantOption}
               >
                 + Add an option
-              </Button>
-              <Button
-                alignSelf="flex-start"
-                onClick={() => {
-                  setQuestion(null);
-                }}
-              >
-                Delete question
               </Button>
             </Card.Footer>
           </Fieldset.Content>

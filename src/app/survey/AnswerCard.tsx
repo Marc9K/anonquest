@@ -4,6 +4,7 @@ import { FirestoreAnswer } from "@/interfaces/firestore";
 import Answer from "@/model/Answer";
 import { Button, Flex, Group, Input } from "@chakra-ui/react";
 import { Ref, useState } from "react";
+import { FiDelete } from "react-icons/fi";
 
 export default function AnswerCard({
   option,
@@ -38,13 +39,14 @@ export default function AnswerCard({
         }}
       />
       <Button
+        aria-label="Delete"
         bg="bg.subtle"
         variant="outline"
         onClick={() => {
           setOption(null);
         }}
       >
-        Delete
+        <FiDelete />
       </Button>
     </Group>
   );

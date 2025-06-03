@@ -4,6 +4,7 @@ export interface FirestoreSurvey {
   participants: string[];
   ownerEmail: string;
   questions?: FirestoreQuestion[];
+  status: string;
 }
 
 export interface FirestoreQuestion {

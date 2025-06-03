@@ -3,21 +3,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /surveys/{surveyId} {
-      allow read: if request.auth != null
-        && request.auth.token.email in resource.data.participants;
+      allow read: if request.auth != null && resource != null
+        && (request.auth.token.email in resource.data.participants || request.auth.token.email == resource.data.ownerEmail);
 
-      allow read, write, update: if request.auth != null
+      allow write, update: if request.auth != null
         && request.auth.token.email == resource.data.ownerEmail;
       
       allow create: if request.auth != null;
 
       match /questions/{questionId} {
         allow read: if request.auth != null
-          && request.auth.token.email in resource.parent.data.participants;
+          && (request.auth.token.email in get(request.query.parent).data.participants || request.auth.token.email == get(request.query.parent).data.ownerEmail);
 
         allow create: if request.auth != null;
 
-        allow read, write, delete, update: if request.auth != null
+        allow write, delete, update: if request.auth != null
           && request.auth.token.email == resource.parent.data.ownerEmail;
 
         match /answers/{answerId} {

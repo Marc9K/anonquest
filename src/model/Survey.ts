@@ -17,9 +17,16 @@ import {
   increment,
   runTransaction,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import Question from "./Question";
 import Answer from "./Answer";
+
+export enum SurveyStatus {
+  PENDING = "pending",
+  ACTIVE = "active",
+  CLOSED = "closed",
+}
 
 export default class Survey implements Loadable {
   id?: string;
@@ -30,6 +37,8 @@ export default class Survey implements Loadable {
 
   questions?: Question[];
   deletedQuestions: Question[] = [];
+
+  status: SurveyStatus = SurveyStatus.PENDING;
 
   ref?: DocumentReference<DocumentData, DocumentData>;
   loaded = false;
@@ -75,7 +84,32 @@ export default class Survey implements Loadable {
     this.description = data.description;
     this.participants = data.participants;
     this.ownerEmail = data.ownerEmail;
+    this.status = data.status;
     await this.loadQuestions();
+  }
+
+  async start() {
+    if (!this.ref) throw new Error("No ref found");
+    if (!this.questions?.length) throw new Error("No questions found");
+    this.questions.forEach((question) =>
+      question.answers.forEach((answer) => {
+        answer.count = 0;
+      })
+    );
+    await updateDoc(this.ref, { status: SurveyStatus.ACTIVE });
+  }
+
+  async finish() {
+    if (!this.ref) throw new Error("No ref found");
+    await updateDoc(this.ref, {
+      status: SurveyStatus.CLOSED,
+      participants: [],
+    });
+  }
+
+  async delete() {
+    if (!this.ref) throw new Error("No ref found");
+    await deleteDoc(this.ref);
   }
 
   async save(form: FormData, byEmail: string) {
@@ -91,6 +125,7 @@ export default class Survey implements Loadable {
       title,
       participants: emails.split(",").map((e) => e.trim()),
       description: "",
+      status: this.status,
     };
 
     const surveyRef = this.id

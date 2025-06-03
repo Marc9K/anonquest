@@ -2,7 +2,7 @@
 
 import { auth } from "../firebase";
 import { useRef, useState } from "react";
-import { Button, Fieldset } from "@chakra-ui/react";
+import { Button, Fieldset, HStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import CreateQuestionCard from "./CreateQuestionCard";
 import FieldInput from "@/components/FieldInput";
@@ -23,6 +23,14 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
     return formData.get(name)?.toString() || "";
   };
 
+  async function deleteSurvey() {
+    if (!process.env.NEXT_PUBLIC_IS_TEST) {
+      if (!confirm("Are you sure you want to delete this survey?")) return;
+    }
+    await survey.delete();
+    router.push("/yours");
+  }
+
   return (
     <>
       <form
@@ -36,7 +44,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
         }}
       >
         <Fieldset.Root size="lg" maxW="md">
-          <Fieldset.Legend>New survey</Fieldset.Legend>
+          {survey.isLocal && <Fieldset.Legend>New survey</Fieldset.Legend>}
 
           <Fieldset.Content>
             <FieldInput
@@ -70,17 +78,28 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               />
             ))}
             <Button
-              alignSelf="flex-start"
               onClick={() => setSurvey((prev) => prev.addingQuestion())}
               disabled={survey.hasVacantQuestion}
             >
               + Add a question
             </Button>
           </Fieldset.Content>
-
-          <Button type="submit" alignSelf="flex-start" marginBottom={50}>
-            {survey.isLocal ? "Create Survey" : "Update Survey"}
-          </Button>
+          <HStack justify="space-between">
+            {!survey.isLocal && (
+              <Button
+                variant="subtle"
+                color="red"
+                alignSelf="flex-start"
+                marginBottom={50}
+                onClick={deleteSurvey}
+              >
+                Delete
+              </Button>
+            )}
+            <Button type="submit" alignSelf="flex-start" marginBottom={50}>
+              {survey.isLocal ? "Save" : "Update"}
+            </Button>
+          </HStack>
         </Fieldset.Root>
       </form>
     </>

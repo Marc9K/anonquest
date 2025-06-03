@@ -90,19 +90,6 @@ function sampleSurvey() {
   return survey;
 }
 
-test("create a survey", async ({ page }) => {
-  await auth(page);
-
-  const survey = sampleSurvey();
-
-  await createSurvey(page);
-  await fillSurvey(page, survey);
-  await page
-    .getByRole("button", { name: "Create Survey" })
-    .click({ force: true });
-  await expect(page.getByText(survey.title!)).toBeVisible();
-});
-
 async function compare(page: Page, survey: Survey) {
   await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue(
     survey.title!
@@ -111,35 +98,74 @@ async function compare(page: Page, survey: Survey) {
     page.getByRole("textbox", { name: "Participants' emails" })
   ).toHaveValue(survey.participants?.join(", ") ?? "");
 
+  let leftToFind = survey.questions ?? [];
+
   for (let index = 0; index < (survey.questions?.length ?? 0); index++) {
-    const card = await page.getByTestId(`${index}-question-card`);
-    const title = await page
+    const card = page.getByTestId(`${index}-question-card`);
+    const title = await card
       .getByRole("textbox", { name: "Question" })
       .inputValue();
-    const question = survey.questions?.find(
-      (question) => question.title === title
-    );
+    const question = leftToFind.find((question) => question.title === title);
     expect(question).toBeTruthy();
+    leftToFind = leftToFind.filter((q) => q !== question);
     await expect(
       card.getByRole("textbox", { name: "Description" })
     ).toHaveValue(question!.description!);
 
+    let answersToFond = question!.answers;
+
     for (let index = 0; index < question!.answers.length; index++) {
-      const option = await page
+      const option = await card
         .getByRole("textbox", { name: "Option" })
+        .nth(index)
         .inputValue();
       expect(
-        question!.answers.find((answer) => answer.title === option)
+        answersToFond.find((answer) => answer.title === option)
       ).toBeTruthy();
+      answersToFond = answersToFond.filter((answer) => answer.title !== option);
     }
   }
+
+  expect(leftToFind.length).toBe(0);
 }
 
-test("check survey has saved", async ({ page }) => {
-  await auth(page);
+test.describe.serial("created and deletes survey", () => {
+  test("create a survey", async ({ page }) => {
+    await auth(page);
 
-  const survey = sampleSurvey();
+    const survey = sampleSurvey();
 
-  await page.getByRole("link", { name: survey.title! }).click();
-  await compare(page, survey);
+    await createSurvey(page);
+    await fillSurvey(page, survey);
+    await page.getByRole("button", { name: "Save" }).click({ force: true });
+    await expect(page.getByText(survey.title!)).toBeVisible();
+  });
+  test("check survey has saved", async ({ page }) => {
+    await auth(page);
+
+    const survey = sampleSurvey();
+
+    await page.getByRole("link", { name: survey.title! }).click();
+    await compare(page, survey);
+  });
+  test("deletes survey", async ({ page }) => {
+    await auth(page);
+
+    const survey = sampleSurvey();
+
+    await page.getByRole("link", { name: survey.title! }).click();
+    const deleteButton = page.getByRole("button", {
+      name: "Delete",
+      exact: true,
+    });
+    const count = await deleteButton.count();
+    await deleteButton.nth(-1).click();
+    page.once("dialog", async (dialog) => {
+      await dialog.accept();
+    });
+    await expect(
+      page.getByRole("link", { name: survey.title! })
+    ).not.toBeVisible();
+    await expect(page).toHaveURL(/\/yours$/);
+  });
 });

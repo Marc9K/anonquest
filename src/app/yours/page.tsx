@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 
-import { useSignOut } from "react-firebase-hooks/auth";
+import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
 import {
@@ -22,7 +22,7 @@ import useAuth from "@/hooks/useAuth";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
-  const [user] = useAuth();
+  const [user] = useAuthState(auth);
   const router = useRouter();
 
   const surveysRef = collection(db, "surveys");
@@ -63,11 +63,7 @@ export default function Account() {
           Sign Out
         </Button>
       </HStack>
-      <Tabs.Root
-        defaultValue={
-          snapshotOwned?.docs.length > 0 ? "research" : "participant"
-        }
-      >
+      <Tabs.Root defaultValue={"research"}>
         <Tabs.List>
           <Tabs.Trigger value="participant">as participant</Tabs.Trigger>
           <Tabs.Trigger value="research">as researcher</Tabs.Trigger>
@@ -90,7 +86,11 @@ export default function Account() {
               <Text>Your Surveys:</Text>
               <SimpleGrid gap={2}>
                 {snapshotOwned?.docs.map((doc) => (
-                  <SurveyLink key={doc.id} doc={doc} />
+                  <SurveyLink
+                    admin={user?.email === doc.data().ownerEmail}
+                    key={doc.id}
+                    doc={doc}
+                  />
                 ))}
               </SimpleGrid>
             </>
