@@ -1,6 +1,6 @@
 import { Accordion, Tabs, Text } from "@chakra-ui/react";
 
-function questions(qs: any[]) {
+function questions(qs: { question: string; answer: string }[]) {
   return (
     <Accordion.Root collapsible>
       {qs.map((item, index) => (

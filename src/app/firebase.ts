@@ -22,6 +22,6 @@ export const auth = getAuth(app);
 
 export const db = getFirestore(app);
 if (process.env.NEXT_PUBLIC_IS_TEST === "true") {
-  connectAuthEmulator(auth, "http://localhost:9099");
+  connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
   connectFirestoreEmulator(db, "localhost", 8080);
 }

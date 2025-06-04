@@ -3,12 +3,13 @@ import QuestionCard from "./QuestionCard";
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import Survey from "@/model/Survey";
-import useAuth from "@/hooks/useAuth";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/app/firebase";
 
 export default function AnswerSurveyForm({ survey }: { survey: Survey }) {
   const formRef = useRef(null);
   const navigate = useRouter();
-  const [user] = useAuth();
+  const [user] = useAuthState(auth);
   return (
     <form
       ref={formRef}

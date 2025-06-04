@@ -1,9 +1,9 @@
-import { Card, SimpleGrid } from "@chakra-ui/react";
+import { SimpleGrid } from "@chakra-ui/react";
 
 export default function ResponsiveGrid({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode[];
 }) {
   return (
     <SimpleGrid

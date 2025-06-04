@@ -1,4 +1,3 @@
-import { FirestoreQuestion } from "@/interfaces/firestore";
 import Question from "@/model/Question";
 import { Card, NativeSelect, Text } from "@chakra-ui/react";
 

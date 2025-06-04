@@ -4,14 +4,12 @@ import {
   Card,
   Link as ChakraLink,
   HStack,
-  List,
-  Stack,
   Text,
 } from "@chakra-ui/react";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { FirestoreSurvey } from "@/interfaces/firestore";
 import { SurveyStatus } from "@/model/Survey";
-import { IoPlay, IoStop } from "react-icons/io5";
+import { IoStop } from "react-icons/io5";
 import { CiEdit } from "react-icons/ci";
 import { AiOutlineEye } from "react-icons/ai";
 
@@ -21,7 +19,7 @@ export default function SurveyLink({
   ...args
 }: {
   doc: QueryDocumentSnapshot<DocumentData, DocumentData>;
-  admin: boolean;
+  admin?: boolean;
 }) {
   const data = doc.data() as FirestoreSurvey;
   return (

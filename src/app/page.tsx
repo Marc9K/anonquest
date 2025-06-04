@@ -1,16 +1,7 @@
 import InfoCard from "@/components/InfoCard";
 import InfoTop from "@/components/InfoTop";
 import ResponsiveGrid from "@/components/ResponsiveGrid";
-import {
-  Button,
-  Card,
-  Heading,
-  HStack,
-  Mark,
-  SimpleGrid,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import { Mark, Stack, Text } from "@chakra-ui/react";
 
 const valueProps = [
   {
@@ -41,10 +32,11 @@ export default function Home() {
         goTo="Why should you care?"
         link="why"
       />
-      <Text>Privacy by Design Isn't Optional</Text>
+      <Text>{"Privacy by Design Isn't Optional"}</Text>
       <Text textWrap="wrap">
-        This isn't another tool with privacy features bolted on. Every
-        architectural decision begins with one question:
+        {
+          "This isn't another tool with privacy features bolted on. Every architectural decision begins with one question:"
+        }
         <Mark variant="subtle" textWrap="wrap">
           How do we protect the people behind the data?
         </Mark>

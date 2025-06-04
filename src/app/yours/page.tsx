@@ -6,19 +6,14 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
 import {
   Button,
-  Link as ChakraLink,
-  Flex,
   HStack,
-  List,
   SimpleGrid,
   Stack,
   Tabs,
   Text,
 } from "@chakra-ui/react";
 import { collection, query, where } from "firebase/firestore";
-import Link from "next/link";
 import SurveyLink from "./SurveyLink";
-import useAuth from "@/hooks/useAuth";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
@@ -69,7 +64,7 @@ export default function Account() {
           <Tabs.Trigger value="research">as researcher</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="participant">
-          {snapshotAssigned?.docs.length > 0 && (
+          {(snapshotAssigned?.docs.length ?? 0) > 0 && (
             <>
               <Text>Take part in Surveys:</Text>
               <SimpleGrid gap={2}>
@@ -81,7 +76,7 @@ export default function Account() {
           )}
         </Tabs.Content>
         <Tabs.Content value="research">
-          {snapshotOwned?.docs.length > 0 && (
+          {snapshotOwned && snapshotOwned.docs.length > 0 && (
             <>
               <Text>Your Surveys:</Text>
               <SimpleGrid gap={2}>

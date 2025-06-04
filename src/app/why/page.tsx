@@ -1,7 +1,7 @@
 import InfoCard from "@/components/InfoCard";
 import InfoTop from "@/components/InfoTop";
 import ResponsiveGrid from "@/components/ResponsiveGrid";
-import { Card, List, ListIndicator, SimpleGrid, Text } from "@chakra-ui/react";
+import { List, ListIndicator, Text } from "@chakra-ui/react";
 
 const valueProps = [
   {
@@ -23,7 +23,7 @@ export default function WhyThisMatters() {
     <>
       <InfoTop
         title="When Answers Require Trust"
-        description="This isn't just another survey tool - it's a privacy ecosystem"
+        description={`This isn\'t just another survey tool - it\'s a privacy ecosystem`}
         link="/how"
         goTo="How does it work?"
       />
@@ -42,8 +42,8 @@ export default function WhyThisMatters() {
       </List.Root>
 
       <Text>
-        The answers change lives - but only if people believe their truth won't
-        hurt them.
+        The answers change lives - but only if people believe their truth
+        won&apos;t hurt them.
       </Text>
       <ResponsiveGrid>
         {valueProps.map((prop) => (

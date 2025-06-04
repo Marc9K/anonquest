@@ -1,15 +1,7 @@
 "use client";
 
-import useAuth from "@/hooks/useAuth";
 import Link from "./Link";
-import {
-  Button,
-  CloseButton,
-  Drawer,
-  Flex,
-  HStack,
-  Portal,
-} from "@chakra-ui/react";
+import { Button, CloseButton, Drawer, HStack, Portal } from "@chakra-ui/react";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { CiMenuBurger } from "react-icons/ci";

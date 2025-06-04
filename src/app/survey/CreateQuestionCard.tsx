@@ -1,23 +1,11 @@
 "use client";
 
-import { FirestoreAnswer, FirestoreQuestion } from "@/interfaces/firestore";
-import {
-  Button,
-  Card,
-  Field,
-  Fieldset,
-  Group,
-  Input,
-  Stack,
-  Textarea,
-  Wrap,
-} from "@chakra-ui/react";
+import { Button, Card, Field, Fieldset, Stack } from "@chakra-ui/react";
 import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
 import Question from "@/model/Question";
-import Answer from "@/model/Answer";
 
 export default function CreateQuestionCard({
   question,
@@ -29,13 +17,13 @@ export default function CreateQuestionCard({
   index: number;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const inputRef = useRef(null);
   const [questionState, setQuestionState] = useState(question);
 
   return (
     <Card.Root
       size="lg"
       onBlur={() => {
+        if (!formRef.current) return;
         const formData = new FormData(formRef.current);
 
         questionState.title = formData.get("title")?.toString() || "";
@@ -73,7 +61,7 @@ export default function CreateQuestionCard({
                 <Field.Label>Answer options</Field.Label>
               </Field.Root>
               <Stack>
-                {questionState.answers?.map((answer, index) => (
+                {questionState.answers?.map((answer) => (
                   <AnswerCard
                     data-testid={`question-answer-option`}
                     // ref={answer.title.length === 0 ? inputRef : undefined}

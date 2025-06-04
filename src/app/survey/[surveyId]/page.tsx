@@ -1,14 +1,15 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import CreateSurvey from "../page";
+import CreateSurvey from "../CreateSurvey";
 import AnswerSurveyForm from "./AnswerSurveyForm";
 import Survey from "@/model/Survey";
-import useAuth from "@/hooks/useAuth";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/app/firebase";
 
 export default function EditingSurvey() {
   const surveyId = useParams()?.surveyId as string;
-  const [user] = useAuth();
+  const [user] = useAuthState(auth);
   const [survey, setSurvey] = useState<Survey | null | undefined>(null);
 
   useEffect(() => {
@@ -16,7 +17,7 @@ export default function EditingSurvey() {
     survey.load().then(() => {
       setSurvey(survey);
     });
-  }, []);
+  }, [surveyId]);
 
   if (!survey) {
     return <>Loading...</>;

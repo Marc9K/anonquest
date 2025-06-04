@@ -14,10 +14,10 @@ export default function YourProtections() {
       />
       <Text>
         No one—not even the researchers—can trace answers back to you. This
-        isn’t an add-on. It’s how the system was built. No hidden "show original
-        responses" button exists Researchers only see grouped patterns (never
-        your individual answers) We physically can't reveal what you said - the
-        system won't allow it
+        isn&apos;t an add-on. It&apos;s how the system was built. No hidden
+        &quot;show original responses&quot; button exists Researchers only see
+        grouped patterns (never your individual answers) We physically
+        can&apos;t reveal what you said - the system won&apos;t allow it
       </Text>
     </Stack>
   );

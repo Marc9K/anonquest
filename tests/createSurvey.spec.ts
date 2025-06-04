@@ -3,14 +3,124 @@ import Question from "@/model/Question";
 import Survey from "@/model/Survey";
 import { test, expect, Page, Locator } from "@playwright/test";
 
+function sampleSurvey(questions: number = 3, options: number = 3) {
+  const sampleQuestions = [
+    {
+      question: "What is your favorite color?",
+      description: "Choose one from the available colors.",
+      options: ["Red", "Blue", "Green", "Yellow"],
+    },
+    {
+      question: "What is your preferred contact method?",
+      description: "Select how you would like to be contacted.",
+      options: ["Email", "Phone", "SMS"],
+    },
+    {
+      question: "Which days are you available?",
+      description: "Select one or more days.",
+      options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    },
+    {
+      question: "What is your highest level of education?",
+      description: "Select the most applicable level.",
+      options: ["High School", "Bachelor's", "Master's", "PhD"],
+    },
+    {
+      question: "Which language do you prefer?",
+      description: "Choose the language you are most comfortable with.",
+      options: ["English", "Spanish", "French", "German"],
+    },
+    {
+      question: "What is your employment status?",
+      description: "Select your current employment situation.",
+      options: ["Employed", "Unemployed", "Student", "Retired"],
+    },
+    {
+      question: "How often do you exercise?",
+      description: "Select the frequency that best describes your routine.",
+      options: ["Daily", "A few times a week", "Rarely", "Never"],
+    },
+    {
+      question: "What device do you use most?",
+      description: "Select the device you use the most.",
+      options: ["Smartphone", "Laptop", "Tablet", "Desktop"],
+    },
+    {
+      question: "Which social media platforms do you use?",
+      description: "Select all that apply.",
+      options: ["Facebook", "Twitter", "Instagram", "LinkedIn", "None"],
+    },
+    {
+      question: "What is your preferred mode of transport?",
+      description: "Choose your primary method of transportation.",
+      options: ["Car", "Bicycle", "Public Transit", "Walking"],
+    },
+  ].slice(0, questions);
+
+  const sampleEmails = [
+    "2test@test.com",
+    "malekuk9@gmail.com",
+    "alice@gmail.com",
+    "bob@gmail.com",
+    "carol@gmail.com",
+    "dave@gmail.com",
+    "eve@gmail.com",
+    "frank@gmail.com",
+    "grace@gmail.com",
+    "heidi@gmail.com",
+    "ivan@gmail.com",
+    "judy@gmail.com",
+    "karen@gmail.com",
+    "leo@gmail.com",
+    "mallory@gmail.com",
+    "nancy@gmail.com",
+    "oscar@gmail.com",
+    "peggy@gmail.com",
+    "trent@gmail.com",
+    "victor@gmail.com",
+    "walter@yahoo.com",
+    "zoe@outlook.com",
+  ];
+
+  const survey = new Survey();
+  survey.title = "Test survey";
+  survey.description = "Test survey description";
+  survey.participants = sampleEmails;
+  survey.questions = sampleQuestions.map((q) => {
+    const question = new Question();
+    question.title = q.question;
+    question.description = q.description;
+    question.answers = q.options.slice(0, options).map((a) => {
+      const answer = new Answer();
+      answer.title = a;
+      return answer;
+    });
+    return question;
+  });
+
+  return survey;
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("http://localhost:3000");
 });
 
-async function auth(page: Page) {
+async function logout(page: Page) {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Yours" }).click();
+  await page.getByRole("button", { name: "Sign Out" }).click();
+}
+
+async function auth(page: Page, profile: number = 0) {
+  const buttons = ["test sign in", "test2 sign in"];
   await page.goto("http://localhost:3000/");
   await page.getByRole("link", { name: "Log In" }).click();
-  await page.getByRole("button", { name: "test sign in" }).click();
+  await page
+    .getByRole("button", { name: buttons[profile] })
+    .waitFor({ state: "attached" });
+  await page
+    .getByRole("button", { name: buttons[profile] })
+    .click({ force: true });
 }
 
 async function createSurvey(page: Page) {
@@ -46,11 +156,6 @@ async function addOption(page: Locator, option: Answer, index: number) {
     .nth(index)
     .fill(option.title);
   await page.press("Tab");
-  //   await page.getByRole("textbox", { name: "Option" }).press("Enter");
-  // await page
-  //   .locator("form")
-  //   .filter({ hasText: "New surveyTitle*Participants" })
-  //   .click();
 }
 
 async function fillSurvey(page: Page, survey: Survey) {
@@ -68,26 +173,6 @@ async function fillSurvey(page: Page, survey: Survey) {
 
     await addQuestion(page, question, index);
   }
-}
-
-function sampleSurvey() {
-  const survey = new Survey();
-  survey.title = "Test survey";
-  survey.description = "Test survey description";
-  survey.participants = ["XXXXXXXXXXXXX"];
-  survey.questions = ["who", "why", "how"].map((q) => {
-    const question = new Question();
-    question.title = q;
-    question.description = q + "Desctiprion";
-    question.answers = ["Underaged", "Adult", "Senior"].map((a) => {
-      const answer = new Answer();
-      answer.title = q + a;
-      return answer;
-    });
-    return question;
-  });
-
-  return survey;
 }
 
 async function compare(page: Page, survey: Survey) {
@@ -129,11 +214,10 @@ async function compare(page: Page, survey: Survey) {
   expect(leftToFind.length).toBe(0);
 }
 
-test.describe.serial("created and deletes survey", () => {
+test.describe.serial("creates and deletes a simple survey", () => {
+  const survey = sampleSurvey(1, 2);
   test("create a survey", async ({ page }) => {
     await auth(page);
-
-    const survey = sampleSurvey();
 
     await createSurvey(page);
     await fillSurvey(page, survey);
@@ -143,22 +227,58 @@ test.describe.serial("created and deletes survey", () => {
   test("check survey has saved", async ({ page }) => {
     await auth(page);
 
-    const survey = sampleSurvey();
-
     await page.getByRole("link", { name: survey.title! }).click();
     await compare(page, survey);
   });
   test("deletes survey", async ({ page }) => {
     await auth(page);
 
-    const survey = sampleSurvey();
+    await page.getByRole("link", { name: survey.title! }).click();
+    const deleteButton = page.getByRole("button", {
+      name: "Delete",
+      exact: true,
+    });
+    await deleteButton.nth(-1).click();
+    page.once("dialog", async (dialog) => {
+      await dialog.accept();
+    });
+    await expect(
+      page.getByRole("link", { name: survey.title! })
+    ).not.toBeVisible();
+    await expect(page).toHaveURL(/\/yours$/);
+  });
+});
+
+test.describe.serial("creates, assigns and deletes a simple survey", () => {
+  const survey = sampleSurvey(1, 2);
+  test("create a survey", async ({ page }) => {
+    await auth(page);
+
+    await createSurvey(page);
+    await fillSurvey(page, survey);
+    await page.getByRole("button", { name: "Save" }).click({ force: true });
+    await expect(page.getByText(survey.title!)).toBeVisible();
+  });
+  test("check survey has saved", async ({ page }) => {
+    await auth(page);
+    await page.getByRole("link", { name: survey.title! }).click();
+  });
+  test("check survey is accessable to assignees", async ({ page }) => {
+    await auth(page, 1);
+    await page.getByRole("tab", { name: "as participant" }).click();
+    await page.getByRole("link", { name: survey.title! }).click();
+    await expect(page.getByText(survey.title!)).toBeVisible();
+    await expect(page.getByText("By test@test.org")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+  });
+  test("deletes survey", async ({ page }) => {
+    await auth(page);
 
     await page.getByRole("link", { name: survey.title! }).click();
     const deleteButton = page.getByRole("button", {
       name: "Delete",
       exact: true,
     });
-    const count = await deleteButton.count();
     await deleteButton.nth(-1).click();
     page.once("dialog", async (dialog) => {
       await dialog.accept();

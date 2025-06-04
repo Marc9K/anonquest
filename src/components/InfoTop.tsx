@@ -1,5 +1,5 @@
 import Link from "@/app/_header/Link";
-import { Button, Heading, Stack } from "@chakra-ui/react";
+import { Heading, Stack } from "@chakra-ui/react";
 
 export default function InfoTop({
   title,

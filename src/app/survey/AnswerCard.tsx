@@ -1,8 +1,7 @@
 "use client";
 
-import { FirestoreAnswer } from "@/interfaces/firestore";
 import Answer from "@/model/Answer";
-import { Button, Flex, Group, Input } from "@chakra-ui/react";
+import { Button, Group, Input } from "@chakra-ui/react";
 import { Ref, useState } from "react";
 import { FiDelete } from "react-icons/fi";
 
@@ -21,6 +20,7 @@ export default function AnswerCard({
     try {
       setOption(option.renaming(text));
     } catch (error) {
+      console.log(error);
       setText(option.title);
     }
   };

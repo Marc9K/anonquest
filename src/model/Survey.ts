@@ -1,10 +1,5 @@
 import { db } from "@/app/firebase";
-import { create } from "domain";
-import {
-  FirestoreQuestion,
-  FirestoreSurvey,
-  type Loadable,
-} from "@/interfaces/firestore";
+import { FirestoreSurvey, type Loadable } from "@/interfaces/firestore";
 import {
   arrayRemove,
   collection,
