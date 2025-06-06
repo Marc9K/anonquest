@@ -4,16 +4,9 @@ import { useRouter } from "next/navigation";
 import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
-import {
-  Button,
-  HStack,
-  SimpleGrid,
-  Stack,
-  Tabs,
-  Text,
-} from "@chakra-ui/react";
+import { Button, HStack, Spinner, Stack, Tabs } from "@chakra-ui/react";
 import { collection, query, where } from "firebase/firestore";
-import SurveyLink from "./SurveyLink";
+import OptionalGrid from "./OptionalGrid";
 
 export default function Account() {
   const [signOut, loadingOut, errorOut] = useSignOut(auth);
@@ -41,7 +34,7 @@ export default function Account() {
     );
   }
   if (loadingOut) {
-    return <p>Loading...</p>;
+    return <Spinner />;
   }
 
   return (
@@ -64,33 +57,10 @@ export default function Account() {
           <Tabs.Trigger value="research">as researcher</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="participant">
-          {(snapshotAssigned?.docs.length ?? 0) > 0 && (
-            <>
-              <Text>Take part in Surveys:</Text>
-              <SimpleGrid gap={2}>
-                {snapshotAssigned?.docs.map((doc) => (
-                  <SurveyLink key={doc.id} doc={doc} />
-                ))}
-              </SimpleGrid>
-            </>
-          )}
+          <OptionalGrid title="Take part in Surveys:" data={snapshotAssigned} />
         </Tabs.Content>
         <Tabs.Content value="research">
-          {snapshotOwned && snapshotOwned.docs.length > 0 && (
-            <>
-              <Text>Your Surveys:</Text>
-              <SimpleGrid gap={2}>
-                {snapshotOwned?.docs.map((doc) => (
-                  <SurveyLink
-                    admin={user?.email === doc.data().ownerEmail}
-                    key={doc.id}
-                    doc={doc}
-                  />
-                ))}
-              </SimpleGrid>
-            </>
-          )}
-
+          <OptionalGrid title="Your Surveys:" isAdmin data={snapshotOwned} />
           <Button
             onClick={async () => {
               router.push("/survey");

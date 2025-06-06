@@ -23,7 +23,7 @@ export default function SurveyLink({
 }) {
   const data = doc.data() as FirestoreSurvey;
   return (
-    <ChakraLink asChild {...args} padding={3}>
+    <ChakraLink asChild {...args} padding={3} width="100%" display="block">
       <Link href={`/survey/${doc.id}`}>
         <Card.Root>
           <Card.Title margin={3}>{data.title}</Card.Title>

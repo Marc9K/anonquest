@@ -5,15 +5,23 @@ import { Button, CloseButton, Drawer, HStack, Portal } from "@chakra-ui/react";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { CiMenuBurger } from "react-icons/ci";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [user] = useAuthState(auth);
 
-  const account = user ? (
-    <Link href="/yours">Yours</Link>
-  ) : (
-    <Link href="/login">Log In</Link>
-  );
+  const path = usePathname();
+  const isYoursPage = path?.includes("/yours");
+  const smallScreen = window.innerWidth < 700;
+
+  const account =
+    smallScreen && isYoursPage ? (
+      <></>
+    ) : user ? (
+      <Link href="/yours">Yours</Link>
+    ) : (
+      <Link href="/login">Log In</Link>
+    );
 
   return (
     <header>

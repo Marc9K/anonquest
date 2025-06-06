@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "NEXT_PUBLIC_IS_TEST=true next dev",
+    "firebase": "firebase emulators:start --only auth,firestore"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.19.1",

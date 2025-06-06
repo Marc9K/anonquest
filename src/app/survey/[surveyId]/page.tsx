@@ -6,6 +6,7 @@ import AnswerSurveyForm from "./AnswerSurveyForm";
 import Survey from "@/model/Survey";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase";
+import { Spinner } from "@chakra-ui/react";
 
 export default function EditingSurvey() {
   const surveyId = useParams()?.surveyId as string;
@@ -20,7 +21,7 @@ export default function EditingSurvey() {
   }, [surveyId]);
 
   if (!survey) {
-    return <>Loading...</>;
+    return <Spinner />;
   }
   if (user?.email === survey.ownerEmail) {
     return <CreateSurvey existing={survey} />;

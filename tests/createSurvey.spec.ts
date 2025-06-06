@@ -59,7 +59,6 @@ function sampleSurvey(questions: number = 3, options: number = 3) {
 
   const sampleEmails = [
     "2test@test.com",
-    "malekuk9@gmail.com",
     "alice@gmail.com",
     "bob@gmail.com",
     "carol@gmail.com",
