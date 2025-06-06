@@ -9598,3 +9598,224 @@ INFO: Detected non-HTTP/2 connection.
 [debug] [2025-06-06T16:57:22.449Z] Jun 06, 2025 5:57:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected non-HTTP/2 connection.
  {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 5:57:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T16:58:22.491Z] Jun 06, 2025 5:58:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 5:58:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T16:59:22.518Z] Jun 06, 2025 5:59:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 5:59:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:00:22.539Z] Jun 06, 2025 6:00:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:00:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:01:22.560Z] Jun 06, 2025 6:01:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:01:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:02:21.567Z] Jun 06, 2025 6:02:21 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:02:21 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed\nINFO: Websocket client disconnected\n"}}
+[debug] [2025-06-06T17:02:21.576Z] Jun 06, 2025 6:02:21 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:02:21 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:07:33.938Z] Jun 06, 2025 6:07:33 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:07:33 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:07:35.794Z] Jun 06, 2025 6:07:35 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:07:35 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-06-06T17:08:49.791Z] Jun 06, 2025 6:08:49 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:08:49 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:09:49.819Z] Jun 06, 2025 6:09:49 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:09:49 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:10:09.901Z] Jun 06, 2025 6:10:09 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:10:09 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed\nINFO: Websocket client disconnected\n"}}
+[debug] [2025-06-06T17:10:09.908Z] Jun 06, 2025 6:10:09 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:10:09 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:12:24.190Z] Jun 06, 2025 6:12:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:12:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:12:40.172Z] Jun 06, 2025 6:12:40 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:12:40 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-06-06T17:13:24.215Z] Jun 06, 2025 6:13:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:13:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:14:40.168Z] Jun 06, 2025 6:14:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:14:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:15:40.183Z] Jun 06, 2025 6:15:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:15:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:16:40.197Z] Jun 06, 2025 6:16:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:16:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:17:26.164Z] Jun 06, 2025 6:17:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:17:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:18:26.257Z] Jun 06, 2025 6:18:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:18:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:19:12.240Z] Jun 06, 2025 6:19:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:19:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:20:28.242Z] Jun 06, 2025 6:20:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:20:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:21:28.268Z] Jun 06, 2025 6:21:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:21:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:22:28.287Z] Jun 06, 2025 6:22:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:22:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:23:44.240Z] Jun 06, 2025 6:23:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:23:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:24:44.268Z] Jun 06, 2025 6:24:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:24:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:26:00.243Z] Jun 06, 2025 6:26:00 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:26:00 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:26:46.246Z] Jun 06, 2025 6:26:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:26:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:27:46.268Z] Jun 06, 2025 6:27:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:27:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:28:46.281Z] Jun 06, 2025 6:28:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:28:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:29:46.298Z] Jun 06, 2025 6:29:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:29:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-06T17:30:44.095Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules [none]
+[debug] [2025-06-06T17:30:44.095Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /surveys/{surveyId} {\n      allow read, update: if request.auth != null && resource != null\n        && (request.auth.token.email in resource.data.participants || request.auth.token.email == resource.data.ownerEmail);\n\n      allow write: if request.auth != null\n        && request.auth.token.email == resource.data.ownerEmail;\n      \n      allow create: if request.auth != null;\n\n      match /questions/{questionId} {\n        allow read: if request.auth != null\n          && (request.auth.token.email in get(request.query.parent).data.participants || request.auth.token.email == get(request.query.parent).data.ownerEmail);\n\n        allow create: if request.auth != null\n          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;\n\n        allow write, delete, update: if request.auth != null\n          && (\n            (\n              request.auth.token.email == resource.parent.data.ownerEmail &&\n              get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending'\n            ) ||\n            (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants &&\n              get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'active'\n            )\n          );\n\n        match /answers/{answerId} {\n          allow create, write, delete: if request.auth != null\n            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n          allow read: if request.auth != null\n            && (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||\n              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && \n                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])\n            );\n\n          allow update: if request.auth != null\n            && (\n              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants \n              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'active') \n              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );\n        }\n      }\n    }\n  }\n}"}]}}
+[debug] [2025-06-06T17:30:44.104Z] Jun 06, 2025 6:30:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:30:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:30:44.127Z] Jun 06, 2025 6:30:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:30:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:30:44.273Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules 200
+[debug] [2025-06-06T17:30:44.273Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":42,"column":17,"currentOffset":2063,"endOffset":2064},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":42,"column":17,"currentOffset":2063,"endOffset":2064},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":42,"column":17,"currentOffset":2063,"endOffset":2064},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":42,"column":114,"currentOffset":2160,"endOffset":2160},"description":"Unexpected ')'.","severity":"ERROR"}]}
+[warn] ⚠  firestore.rules:42:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:42:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:42:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:42:114 - ERROR Unexpected ')'. 
+[info] ✔  firestore: Rules updated. 
+[debug] [2025-06-06T17:30:46.315Z] Jun 06, 2025 6:30:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:30:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:31:32.249Z] Jun 06, 2025 6:31:32 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:31:32 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:32:32.282Z] Jun 06, 2025 6:32:32 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:32:32 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:33:18.249Z] Jun 06, 2025 6:33:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:33:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:34:18.276Z] Jun 06, 2025 6:34:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:34:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:35:18.303Z] Jun 06, 2025 6:35:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:35:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:36:18.350Z] Jun 06, 2025 6:36:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:36:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:37:18.373Z] Jun 06, 2025 6:37:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:37:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:38:18.391Z] Jun 06, 2025 6:38:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:38:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:39:18.418Z] Jun 06, 2025 6:39:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:39:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:40:18.460Z] Jun 06, 2025 6:40:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:40:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:41:18.484Z] Jun 06, 2025 6:41:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:41:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:42:18.499Z] Jun 06, 2025 6:42:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:42:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:43:04.267Z] Jun 06, 2025 6:43:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:43:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:44:04.285Z] Jun 06, 2025 6:44:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:44:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:45:04.305Z] Jun 06, 2025 6:45:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:45:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:46:04.326Z] Jun 06, 2025 6:46:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:46:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:47:04.345Z] Jun 06, 2025 6:47:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:47:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-06T17:47:16.104Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules [none]
+[debug] [2025-06-06T17:47:16.104Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /surveys/{surveyId} {\n      allow read, update: if request.auth != null && resource != null\n        && ((request.auth.token.email in resource.data.participants \n        && resource.data.status == 'active') || request.auth.token.email == resource.data.ownerEmail);\n\n      allow write: if request.auth != null\n        && request.auth.token.email == resource.data.ownerEmail;\n      \n      allow create: if request.auth != null;\n\n      match /questions/{questionId} {\n        allow read: if request.auth != null\n          && (request.auth.token.email in get(request.query.parent).data.participants || request.auth.token.email == get(request.query.parent).data.ownerEmail);\n\n        allow create: if request.auth != null\n          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;\n\n        allow write, delete, update: if request.auth != null\n          && \n              request.auth.token.email == resource.parent.data.ownerEmail &&\n              get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending'\n          ;\n\n        match /answers/{answerId} {\n          allow create, write, delete: if request.auth != null\n            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n          allow read: if request.auth != null\n            && (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||\n              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && \n                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])\n            );\n\n          allow update: if request.auth != null\n            && (\n              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants \n              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') \n              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );\n        }\n      }\n    }\n  }\n}"}]}}
+[debug] [2025-06-06T17:47:16.116Z] Jun 06, 2025 6:47:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:47:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:47:16.158Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules 200
+[debug] [2025-06-06T17:47:16.158Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":37,"column":17,"currentOffset":1832,"endOffset":1833},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":37,"column":17,"currentOffset":1832,"endOffset":1833},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":37,"column":17,"currentOffset":1832,"endOffset":1833},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":37,"column":114,"currentOffset":1929,"endOffset":1929},"description":"Unexpected ')'.","severity":"ERROR"}]}
+[warn] ⚠  firestore.rules:37:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:37:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:37:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:37:114 - ERROR Unexpected ')'. 
+[info] ✔  firestore: Rules updated. 
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-06T17:47:29.944Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules [none]
+[debug] [2025-06-06T17:47:29.944Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /surveys/{surveyId} {\n      allow read, update: if request.auth != null && resource != null\n        && ((request.auth.token.email in resource.data.participants \n        && resource.data.status == 'active') || request.auth.token.email == resource.data.ownerEmail);\n\n      allow write: if request.auth != null\n        && request.auth.token.email == resource.data.ownerEmail;\n      \n      allow create: if request.auth != null;\n\n      match /questions/{questionId} {\n        allow read: if request.auth != null\n          && (request.auth.token.email in get(request.query.parent).data.participants || request.auth.token.email == get(request.query.parent).data.ownerEmail);\n\n        allow create: if request.auth != null\n          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;\n\n        allow write, delete, update: if request.auth != null\n          && request.auth.token.email == resource.parent.data.ownerEmail \n          && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n        match /answers/{answerId} {\n          allow create, write, delete: if request.auth != null\n            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n          allow read: if request.auth != null\n            && (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||\n              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && \n                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])\n            );\n\n          allow update: if request.auth != null\n            && (\n              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants \n              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') \n              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );\n        }\n      }\n    }\n  }\n}"}]}}
+[debug] [2025-06-06T17:47:29.947Z] Jun 06, 2025 6:47:29 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:47:29 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:47:29.974Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules 200
+[debug] [2025-06-06T17:47:29.974Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":35,"column":17,"currentOffset":1803,"endOffset":1804},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":35,"column":17,"currentOffset":1803,"endOffset":1804},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":35,"column":17,"currentOffset":1803,"endOffset":1804},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":35,"column":114,"currentOffset":1900,"endOffset":1900},"description":"Unexpected ')'.","severity":"ERROR"}]}
+[warn] ⚠  firestore.rules:35:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:35:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:35:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:35:114 - ERROR Unexpected ')'. 
+[info] ✔  firestore: Rules updated. 
+[debug] [2025-06-06T17:48:04.365Z] Jun 06, 2025 6:48:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:48:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-06T17:48:04.707Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules [none]
+[debug] [2025-06-06T17:48:04.708Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /surveys/{surveyId} {\n      allow read, update: if request.auth != null && resource != null\n        && ((request.auth.token.email in resource.data.participants \n        && resource.data.status == 'active') || request.auth.token.email == resource.data.ownerEmail);\n\n      allow write: if request.auth != null\n        && request.auth.token.email == resource.data.ownerEmail;\n      \n      allow create: if request.auth != null;\n\n      match /questions/{questionId} {\n        allow read: if request.auth != null\n          && (request.auth.token.email in get(request.query.parent).data.participants \n          || request.auth.token.email == get(request.query.parent).data.ownerEmail);\n\n        allow create: if request.auth != null\n          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;\n\n        allow write, delete, update: if request.auth != null\n          && request.auth.token.email == resource.parent.data.ownerEmail \n          && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n        match /answers/{answerId} {\n          allow create, write, delete: if request.auth != null\n            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n          allow read: if request.auth != null\n            && (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||\n              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && \n                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])\n            );\n\n          allow update: if request.auth != null\n            && (\n              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants \n              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') \n              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );\n        }\n      }\n    }\n  }\n}"}]}}
+[debug] [2025-06-06T17:48:04.710Z] Jun 06, 2025 6:48:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:48:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:48:04.732Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules 200
+[debug] [2025-06-06T17:48:04.732Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":114,"currentOffset":1911,"endOffset":1911},"description":"Unexpected ')'.","severity":"ERROR"}]}
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:114 - ERROR Unexpected ')'. 
+[info] ✔  firestore: Rules updated. 
+[debug] [2025-06-06T17:48:50.271Z] Jun 06, 2025 6:48:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:48:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-06-06T17:49:03.817Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules [none]
+[debug] [2025-06-06T17:49:03.818Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /surveys/{surveyId} {\n      allow read, update: if request.auth != null && resource != null\n        && ((request.auth.token.email in resource.data.participants \n        && resource.data.status == 'active') || request.auth.token.email == resource.data.ownerEmail);\n\n      allow write: if request.auth != null\n        && request.auth.token.email == resource.data.ownerEmail;\n      \n      allow create: if request.auth != null;\n\n      match /questions/{questionId} {\n        allow read: if request.auth != null\n          && (request.auth.token.email in get(request.query.parent).data.participants \n          || request.auth.token.email == get(request.query.parent).data.ownerEmail);\n\n        allow create: if request.auth != null\n          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;\n\n        allow write, delete, update: if request.auth != null\n          && request.auth.token.email == resource.parent.data.ownerEmail \n          && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n        match /answers/{answerId} {\n          allow create, write, delete: if request.auth != null\n            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';\n\n          allow read: if request.auth != null\n            && (\n              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||\n              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && \n                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])\n            );\n\n          allow update: if request.auth != null\n            && (\n              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants \n              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'active') \n              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail\n            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );\n        }\n      }\n    }\n  }\n}"}]}}
+[debug] [2025-06-06T17:49:03.823Z] Jun 06, 2025 6:49:03 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 06, 2025 6:49:03 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-06-06T17:49:03.854Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules 200
+[debug] [2025-06-06T17:49:03.854Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/anonquest-c3f3b:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":17,"currentOffset":1814,"endOffset":1815},"description":"Unexpected '&&'.","severity":"ERROR"},{"sourcePosition":{"fileName":"security.rules","line":36,"column":114,"currentOffset":1911,"endOffset":1911},"description":"Unexpected ')'.","severity":"ERROR"}]}
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:17 - ERROR Unexpected '&&'. 
+[warn] ⚠  firestore.rules:36:114 - ERROR Unexpected ')'. 
+[info] ✔  firestore: Rules updated. 
