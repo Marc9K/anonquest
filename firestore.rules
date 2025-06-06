@@ -21,7 +21,7 @@ service cloud.firestore {
           && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
 
         allow write, delete, update: if request.auth != null
-          && request.auth.token.email == resource.parent.data.ownerEmail 
+          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail 
           && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';
 
         match /answers/{answerId} {
@@ -32,7 +32,7 @@ service cloud.firestore {
           allow read: if request.auth != null
             && (
               request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||
-              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail && 
+              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail
                 && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])
             );
 

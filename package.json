@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "NEXT_PUBLIC_IS_TEST=true next dev",
-    "firebase": "firebase emulators:start --only auth,firestore"
+    "firebase": "firebase emulators:start --only auth,firestore",
+    "playtestui": "npx playwright test --project=webkit --ui",
+    "playtest": "npx playwright test"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.19.1",

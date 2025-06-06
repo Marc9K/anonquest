@@ -12,7 +12,7 @@ export default function Header() {
 
   const path = usePathname();
   const isYoursPage = path?.includes("/yours");
-  const smallScreen = window.innerWidth < 700;
+  const smallScreen = false; // window.innerWidth < 700;
 
   const account =
     smallScreen && isYoursPage ? (

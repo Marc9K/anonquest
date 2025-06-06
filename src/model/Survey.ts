@@ -122,54 +122,48 @@ export default class Survey implements Loadable {
       description: "",
       status: this.status,
     };
-
     const surveyRef = this.id
       ? doc(db, "surveys", this.id)
       : doc(collection(db, "surveys"));
-    await setDoc(surveyRef, surveyData);
+    setDoc(surveyRef, surveyData);
     const questionsCollectionRef = collection(surveyRef, "questions");
 
-    if (this.ref) {
-      await Promise.all(
-        this.deletedQuestions.map(async (deleted) => {
+    await runTransaction(db, async (transaction) => {
+      if (this.ref) {
+        for (const deleted of this.deletedQuestions) {
           if (deleted._title) {
-            return await deleteDoc(doc(surveyRef, "questions", deleted._title));
+            transaction.delete(doc(surveyRef, "questions", deleted._title));
           }
-        })
-      );
-    }
-
-    console.log(this.questions);
-    try {
-      for (const question of this.questions ?? []) {
-        const questionRef = doc(questionsCollectionRef, question.title);
-        if (this.ref && question.answersToDelete) {
-          await Promise.all(
-            question.answersToDelete.map(async (deleted: Answer) => {
-              if (deleted._title) {
-                return await deleteDoc(
-                  doc(questionRef, "answers", deleted._title)
-                );
-              }
-            })
-          );
-        }
-        await setDoc(questionRef, {
-          description: question.description ?? "",
-        });
-
-        const answersCollectionRef = collection(questionRef, "answers");
-        for (const answer of question.answers ?? []) {
-          const answerRef = doc(answersCollectionRef, answer.title);
-          await setDoc(answerRef, { count: 0 });
         }
       }
-    } catch (e) {
-      console.error("Error adding answer: ", e);
-    }
 
-    this.ref = surveyRef;
-    this.id = surveyRef.id;
+      try {
+        for (const question of this.questions ?? []) {
+          const questionRef = doc(questionsCollectionRef, question.title);
+          if (this.ref && question.answersToDelete) {
+            for (const deleted of question.answersToDelete) {
+              if (deleted._title) {
+                transaction.delete(doc(questionRef, "answers", deleted._title));
+              }
+            }
+          }
+          transaction.set(questionRef, {
+            description: question.description ?? "",
+          });
+
+          const answersCollectionRef = collection(questionRef, "answers");
+          for (const answer of question.answers ?? []) {
+            const answerRef = doc(answersCollectionRef, answer.title);
+            transaction.set(answerRef, { count: 0 });
+          }
+        }
+      } catch (e) {
+        console.error("Error adding answer: ", e);
+      }
+
+      this.ref = surveyRef;
+      this.id = surveyRef.id;
+    });
   }
 
   async loadQuestions() {

@@ -120,11 +120,13 @@ async function auth(page: Page, profile: number = 0) {
   await page
     .getByRole("button", { name: buttons[profile] })
     .click({ force: true });
+  await page.waitForURL("/yours");
 }
 
 async function createSurvey(page: Page) {
   await page.goto("http://localhost:3000/yours");
   await page.getByRole("button", { name: "New survey" }).click();
+  await page.waitForURL("/survey");
 }
 
 async function addQuestion(page: Page, question: Question, index: number) {
@@ -221,12 +223,14 @@ test.describe.serial("creates and deletes a simple survey", () => {
     await createSurvey(page);
     await fillSurvey(page, survey);
     await page.getByRole("button", { name: "Save" }).click({ force: true });
+    await page.waitForURL("/yours");
     await expect(page.getByText(survey.title!)).toBeVisible();
   });
   test("check survey has saved", async ({ page }) => {
     await auth(page);
 
     await page.getByRole("link", { name: survey.title! }).click();
+    await page.waitForURL("/survey/*");
     await compare(page, survey);
   });
   test("deletes survey", async ({ page }) => {
@@ -241,6 +245,7 @@ test.describe.serial("creates and deletes a simple survey", () => {
     page.once("dialog", async (dialog) => {
       await dialog.accept();
     });
+    await page.waitForURL("/yours");
     await expect(
       page.getByRole("link", { name: survey.title! })
     ).not.toBeVisible();
