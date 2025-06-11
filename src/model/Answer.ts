@@ -1,6 +1,7 @@
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 
 export default class Answer {
+  static fireCollection = "answers";
   title: string;
   _title?: string;
   count: number;
@@ -26,5 +27,14 @@ export default class Answer {
     copy._title = this._title;
     copy.count = this.count;
     return copy;
+  }
+
+  get firestore() {
+    return {
+      id: this.title,
+      data: {
+        count: this.count,
+      },
+    };
   }
 }

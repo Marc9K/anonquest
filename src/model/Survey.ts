@@ -1,4 +1,4 @@
-import { db } from "@/app/firebase";
+import { db } from "../app/firebase";
 import { FirestoreSurvey, type Loadable } from "@/interfaces/firestore";
 import {
   arrayRemove,
@@ -16,14 +16,11 @@ import {
 } from "firebase/firestore";
 import Question from "./Question";
 import Answer from "./Answer";
-
-export enum SurveyStatus {
-  PENDING = "pending",
-  ACTIVE = "active",
-  CLOSED = "closed",
-}
+import { SurveyStatus } from "./SurveyStatus";
 
 export default class Survey implements Loadable {
+  static fireCollection = "surveys";
+
   id?: string;
   title?: string;
   description?: string;
@@ -66,6 +63,24 @@ export default class Survey implements Loadable {
 
   get copy() {
     return Survey.copy(this);
+  }
+
+  get firestore() {
+    return {
+      id: this.id,
+      collections: {
+        participants: this.participants?.map((participant) => ({
+          id: participant,
+        })),
+        questions: this.questions?.map((question) => question.firestore),
+      },
+      data: {
+        ownerEmail: this.ownerEmail,
+        title: this.title,
+        description: "",
+        status: this.status,
+      },
+    };
   }
 
   async load() {
@@ -115,6 +130,8 @@ export default class Survey implements Loadable {
     const title = form.get("title")?.toString() || "";
     const emails = form.get("emails")?.toString() || "";
 
+    this.title = title;
+
     const surveyData: FirestoreSurvey = {
       ownerEmail: byEmail,
       title,
@@ -147,9 +164,7 @@ export default class Survey implements Loadable {
               }
             }
           }
-          transaction.set(questionRef, {
-            description: question.description ?? "",
-          });
+          transaction.set(questionRef, question.firestore.data);
 
           const answersCollectionRef = collection(questionRef, "answers");
           for (const answer of question.answers ?? []) {

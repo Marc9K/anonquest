@@ -10,6 +10,8 @@ import { type Loadable } from "@/interfaces/firestore";
 import Answer from "./Answer";
 
 export default class Question implements Loadable {
+  static fireCollection = "questions";
+
   title?: string;
   _title?: string;
   description?: string;
@@ -86,6 +88,20 @@ export default class Question implements Loadable {
     copy.answersToDelete = this.answersToDelete;
     copy.ref = this.ref;
     return copy;
+  }
+
+  get firestore() {
+    return {
+      id: this.id,
+      collections: {
+        answers: this.answers?.map((answer) => answer.firestore),
+      },
+      data: {
+        title: this.title,
+        answers: this.answers?.map((answer) => answer.title),
+        description: this.description,
+      },
+    };
   }
 
   addingOption() {
