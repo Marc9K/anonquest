@@ -7,14 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "NEXT_PUBLIC_IS_TEST=true next dev",
+    "dev-test": "NEXT_PUBLIC_IS_TEST=true next dev",
     "firebase": "firebase emulators:start --only auth,firestore",
     "playtestui": "npx playwright test --project=webkit --ui",
-    "playtest": "npx playwright test"
+    "playtest": "npx playwright test",
+    "test": "jest --detectOpenHandles --watch"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.19.1",
     "@emotion/react": "^11.14.0",
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@react-oauth/google": "^0.12.2",
     "firebase": "^11.8.1",
     "next": "15.3.2",
@@ -27,12 +29,17 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@firebase/testing": "^0.20.11",
     "@playwright/test": "^1.52.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
+    "fs": "^0.0.1-security",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
     "typescript": "^5"
   }
 }

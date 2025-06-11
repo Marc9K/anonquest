@@ -3,45 +3,66 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /surveys/{surveyId} {
-      allow read, update: if request.auth != null && resource != null
-        && ((request.auth.token.email in resource.data.participants 
-        && resource.data.status == 'active') || request.auth.token.email == resource.data.ownerEmail);
 
-      allow write: if request.auth != null
-        && request.auth.token.email == resource.data.ownerEmail;
-      
-      allow create: if request.auth != null;
+      function isAuthed() {
+        return request.auth != null;
+      }
+
+      function isParticipant() {
+        return isAuthed()
+          && exists(/databases/$(database)/documents/surveys/$(surveyId)/participants/$(request.auth.token.email));
+      }
+
+      function isOwner() {
+        return isAuthed()
+          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+      }
+
+      function statusIs(status) {
+        return  'status' in request.resource.data && request.resource.data.status == status 
+          || get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == status;
+      }
+
+      function isSentValidSurvey() {
+        let fields = ["title", "description", "ownerEmail", "status"];
+        return request.resource.data.keys().hasAll(fields)
+        && request.resource.data.keys().hasOnly(fields)
+      }
+
+      // create: read: update: delete:
+
+      allow create: if isAuthed() && isSentValidSurvey()
+        && request.resource.data.ownerEmail == request.auth.token.email 
+        && statusIs('pending');
+
+      allow read: if isOwner() 
+        || (isParticipant() && statusIs('active'));
+
+      allow update: if isOwner() 
+        && (statusIs('pending') || (statusIs('active') && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'closed'));
+
+      allow delete: if isOwner();
+
+      match /participants/{participantEmail} {
+        allow create: if isOwner() && !statusIs('closed');
+
+        allow read: if isOwner() && statusIs('pending') || request.auth.token.email == participantEmail;
+
+        allow delete: if isOwner() || request.auth.token.email == participantEmail;
+
+      }
 
       match /questions/{questionId} {
-        allow read: if request.auth != null
-          && (request.auth.token.email in get(request.query.parent).data.participants 
-          || request.auth.token.email == get(request.query.parent).data.ownerEmail);
+        allow read: if isParticipant() && statusIs('active') || isOwner();
 
-        allow create: if request.auth != null
-          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
-
-        allow write, delete, update: if request.auth != null
-          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail 
-          && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';
+        allow create, update, delete: if isOwner() && statusIs('pending');
 
         match /answers/{answerId} {
-          allow create, write, delete: if request.auth != null
-            && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail
-            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending';
+          allow create: if isOwner() && statusIs('pending') && request.resource.data.count == 0 || isParticipant() && statusIs('active') && request.resource.data.count == 1;
+          allow delete: if isOwner() && statusIs('pending');
+          allow read: if isOwner() && !statusIs('active');
 
-          allow read: if request.auth != null
-            && (
-              request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants ||
-              (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail
-                && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status in ['pending', 'closed'])
-            );
-
-          allow update: if request.auth != null
-            && (
-              (request.auth.token.email in get(/databases/$(database)/documents/surveys/$(surveyId)).data.participants 
-              && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'active') 
-              || (request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail
-            && get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == 'pending') );
+          allow update: if isParticipant() && statusIs('active') && request.resource.data.count - 1 == resource.data.count;
         }
       }
     }
