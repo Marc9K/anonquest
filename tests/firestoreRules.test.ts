@@ -113,6 +113,7 @@ function surveyRef(id: string, firestore = creatorFirestore) {
 async function createSurvey(id: string, data: any) {
   await testEnv?.withSecurityRulesDisabled(async (context) => {
     const survey = surveyRef(id, context.firestore());
+    console.log(data);
     await setDoc(survey, data);
     await setDoc(
       survey.collection("participants").doc(participant.options.email),
@@ -788,7 +789,9 @@ describe("when survey has completed", () => {
           status: SurveyStatus.CLOSED,
         });
 
-        await assertFails(getDoc(surveyRef(id)));
+        await assertFails(
+          getDoc(surveyRef(id, participantContext!.firestore()))
+        );
       });
       test("read the questions", async () => {
         const id = crypto.randomUUID();
@@ -796,7 +799,13 @@ describe("when survey has completed", () => {
           ...testSurvey,
           status: SurveyStatus.CLOSED,
         });
-        await assertFails(getDocs(surveyRef(id).collection("questions")));
+        await assertFails(
+          getDocs(
+            surveyRef(id, participantContext!.firestore()).collection(
+              "questions"
+            )
+          )
+        );
       });
       test("read the answers", async () => {
         const id = crypto.randomUUID();
@@ -806,7 +815,7 @@ describe("when survey has completed", () => {
         });
         await assertFails(
           getDocs(
-            surveyRef(id)
+            surveyRef(id, participantContext!.firestore())
               .collection("questions")
               .doc(crypto.randomUUID())
               .collection("answers")
