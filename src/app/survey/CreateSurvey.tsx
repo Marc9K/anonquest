@@ -14,7 +14,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [user] = useAuthState(auth);
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [survey, setSurvey] = useState(existing ?? new Survey());
+  const [survey, setSurvey] = useState(
+    existing ?? new Survey(undefined, user?.email)
+  );
 
   const get = (name: string) => {
     if (!formRef.current) return "";

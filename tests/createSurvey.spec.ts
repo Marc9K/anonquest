@@ -261,6 +261,7 @@ test.describe.serial("creates, assigns and deletes a simple survey", () => {
     await createSurvey(page);
     await fillSurvey(page, survey);
     await page.getByRole("button", { name: "Save" }).click({ force: true });
+    await page.waitForURL("/yours");
     await expect(page.getByText(survey.title!)).toBeVisible();
   });
   test("check survey has saved", async ({ page }) => {

@@ -35,13 +35,13 @@ export default class Survey implements Loadable {
   ref?: DocumentReference<DocumentData, DocumentData>;
   loaded = false;
 
-  constructor(id?: string) {
+  constructor(id?: string, ownerEmail?: string | null) {
     this.id = id;
     if (!id) {
       this.title = "";
       this.description = "";
       this.participants = [];
-      this.ownerEmail = "";
+      this.ownerEmail = ownerEmail ?? "";
       this.questions = [];
     }
   }
@@ -92,10 +92,18 @@ export default class Survey implements Loadable {
     const data = docSnap.data();
     this.title = data.title;
     this.description = data.description;
-    this.participants = data.participants;
     this.ownerEmail = data.ownerEmail;
     this.status = data.status;
     await this.loadQuestions();
+
+    this.participants = await this.participantsList();
+  }
+
+  async participantsList() {
+    if (!this.ref) return [];
+    const participantsRef = collection(this.ref, "participants");
+    const participantsSnap = await getDocs(participantsRef);
+    return participantsSnap.docs.map((doc) => doc.id);
   }
 
   async start() {
@@ -122,6 +130,12 @@ export default class Survey implements Loadable {
     await deleteDoc(this.ref);
   }
 
+  difference = (a: Set<any> | any[], b: Set<any> | any[]) => {
+    const setA = new Set(a);
+    const setB = new Set(b);
+    return [...setA].filter((x) => !setB.has(x));
+  };
+
   async save(form: FormData, byEmail: string) {
     // if (this.id || this.ref) throw new Error("Survey already exists");
 
@@ -130,62 +144,90 @@ export default class Survey implements Loadable {
     const title = form.get("title")?.toString() || "";
     const emails = form.get("emails")?.toString() || "";
 
+    console.log(emails);
+
     this.title = title;
+    this.participants = emails.split(",").map((email) => email.trim());
+    console.log(this.participants);
 
-    const surveyData: FirestoreSurvey = {
-      ownerEmail: byEmail,
-      title,
-      participants: emails.split(",").map((e) => e.trim()),
-      description: "",
-      status: this.status,
-    };
-    const surveyRef = this.id
-      ? doc(db, "surveys", this.id)
-      : doc(collection(db, "surveys"));
-    setDoc(surveyRef, surveyData);
-    const questionsCollectionRef = collection(surveyRef, "questions");
+    try {
+      const surveyRef = this.id
+        ? doc(db, "surveys", this.id)
+        : doc(collection(db, "surveys"));
+      await setDoc(surveyRef, this.firestore.data);
+      console.log(this.firestore.data);
+      const questionsCollectionRef = collection(surveyRef, "questions");
 
-    await runTransaction(db, async (transaction) => {
-      if (this.ref) {
-        for (const deleted of this.deletedQuestions) {
-          if (deleted._title) {
-            transaction.delete(doc(surveyRef, "questions", deleted._title));
-          }
-        }
-      }
+      const participants = await this.participantsList();
+      console.log(participants);
 
-      try {
-        for (const question of this.questions ?? []) {
-          const questionRef = doc(questionsCollectionRef, question.title);
-          if (this.ref && question.answersToDelete) {
-            for (const deleted of question.answersToDelete) {
+      await runTransaction(db, async (transaction) => {
+        try {
+          if (this.ref) {
+            for (const deleted of this.deletedQuestions) {
               if (deleted._title) {
-                transaction.delete(doc(questionRef, "answers", deleted._title));
+                transaction.delete(doc(surveyRef, "questions", deleted._title));
               }
             }
           }
-          transaction.set(questionRef, question.firestore.data);
 
-          const answersCollectionRef = collection(questionRef, "answers");
-          for (const answer of question.answers ?? []) {
-            const answerRef = doc(answersCollectionRef, answer.title);
-            transaction.set(answerRef, { count: 0 });
+          for (const question of this.questions ?? []) {
+            const questionRef = doc(questionsCollectionRef, question.title);
+            if (this.ref && question.answersToDelete) {
+              for (const deleted of question.answersToDelete) {
+                if (deleted._title) {
+                  transaction.delete(
+                    doc(questionRef, "answers", deleted._title)
+                  );
+                }
+              }
+            }
+            transaction.set(questionRef, question.firestore.data);
+
+            const answersCollectionRef = collection(questionRef, "answers");
+            for (const answer of question.answers ?? []) {
+              const answerRef = doc(answersCollectionRef, answer.title);
+              transaction.set(answerRef, { count: 0 });
+            }
           }
-        }
-      } catch (e) {
-        console.error("Error adding answer: ", e);
-      }
 
-      this.ref = surveyRef;
-      this.id = surveyRef.id;
-    });
+          const toAdd = this.difference(this.participants ?? [], participants);
+          const toDelete = this.difference(
+            participants,
+            this.participants ?? []
+          );
+
+          console.log(toAdd, toDelete);
+          const participantsCollectionRef = collection(
+            surveyRef,
+            "participants"
+          );
+          for (const participant of toAdd) {
+            console.log("adding ", participant);
+            const participantRef = doc(participantsCollectionRef, participant);
+            transaction.set(participantRef, {});
+            console.log("added ", participant);
+          }
+          for (const participant of toDelete) {
+            const participantRef = doc(participantsCollectionRef, participant);
+            transaction.delete(participantRef);
+          }
+        } catch (e) {
+          console.error("Error adding answer: ", e);
+        }
+
+        this.ref = surveyRef;
+        this.id = surveyRef.id;
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async loadQuestions() {
     if (!this.ref) throw new Error("No ref found");
     const questionsRef = collection(this.ref, "questions");
     const questionsSnap = await getDocs(questionsRef);
-    console.log(7);
     const questionsLoaders = questionsSnap.docs.map(async (q) => {
       const question = new Question(q);
       await question.load();

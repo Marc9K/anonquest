@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { FirestoreSurvey } from "@/interfaces/firestore";
-import { SurveyStatus } from "@/model/Survey";
+import { SurveyStatus } from "@/model/SurveyStatus";
 import { IoStop } from "react-icons/io5";
 import { CiEdit } from "react-icons/ci";
 import { AiOutlineEye } from "react-icons/ai";
