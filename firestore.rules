@@ -2,11 +2,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /surveys/{surveyId} {
-
-      function isAuthed() {
+    function isAuthed() {
         return request.auth != null;
       }
+
+    match /participants/{participantEmail} {
+      function isTheParticipant() {
+        return request.auth.token.email == participantEmail;
+      }
+
+      allow read, write: if isTheParticipant();
+
+      match /surveys/{surveyId} {
+      function isSurveyOwner() {
+        return request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+      }
+        allow create: if isSurveyOwner();
+        allow delete: if isSurveyOwner() || isTheParticipant();
+        allow read: if isTheParticipant();
+      }
+    }
+
+    match /surveys/{surveyId} {
 
       function statusWillBe(status) {
         return  'status' in request.resource.data && request.resource.data.status == status;
@@ -58,7 +75,7 @@ service cloud.firestore {
       match /participants/{participantEmail} {
         allow create: if isOwner() && !statusIs('closed');
 
-        allow read: if isOwner() && statusIs('pending') || request.auth.token.email == participantEmail;
+        allow read: if isOwner() || request.auth.token.email == participantEmail;
 
         allow delete: if isOwner() || request.auth.token.email == participantEmail;
 

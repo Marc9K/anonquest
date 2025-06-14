@@ -96,7 +96,11 @@ export default class Survey implements Loadable {
     this.status = data.status;
     await this.loadQuestions();
 
-    this.participants = await this.participantsList();
+    try {
+      this.participants = await this.participantsList();
+    } catch {
+      this.participants = [];
+    }
   }
 
   async participantsList() {
@@ -163,6 +167,69 @@ export default class Survey implements Loadable {
 
       await runTransaction(db, async (transaction) => {
         try {
+          const toAdd: string[] = this.difference(
+            this.participants ?? [],
+            participants
+          );
+          const toDelete: string[] = this.difference(
+            participants,
+            this.participants ?? []
+          );
+
+          const participantsCollectionRef = collection(
+            surveyRef,
+            "participants"
+          );
+
+          const potentialExistingParticipants = (
+            await Promise.allSettled(
+              toAdd.map((participant) =>
+                transaction.get(doc(participantsCollectionRef, participant))
+              )
+            )
+          ).filter((potential) => potential.status == "fulfilled");
+
+          const participantsCollection = collection(db, "participants");
+          for (const participant of toAdd) {
+            const participantRef = doc(participantsCollectionRef, participant);
+            try {
+              const existingParticipant = potentialExistingParticipants.find(
+                (existing) => existing.value.id
+              )?.value;
+              if (
+                existingParticipant &&
+                existingParticipant.exists() &&
+                existingParticipant.data.status
+              )
+                continue;
+              transaction.set(participantRef, { status: "added" });
+              //
+              const participantDocRef = doc(
+                participantsCollection,
+                participant
+              );
+              const surveysSubcollectionRef = collection(
+                participantDocRef,
+                "surveys"
+              );
+              const surveyDocRef = doc(surveysSubcollectionRef, surveyRef.id);
+              transaction.set(surveyDocRef, {});
+            } catch (error) {
+              console.log("Participant in collection");
+            }
+          }
+          for (const participant of toDelete) {
+            const participantRef = doc(participantsCollectionRef, participant);
+            transaction.update(participantRef, { status: "removed" });
+            //
+            const participantDocRef = doc(participantsCollection, participant);
+            const surveysSubcollectionRef = collection(
+              participantDocRef,
+              "surveys"
+            );
+            const surveyDocRef = doc(surveysSubcollectionRef, surveyRef.id);
+            transaction.delete(surveyDocRef);
+          }
           if (this.ref) {
             for (const deleted of this.deletedQuestions) {
               if (deleted._title) {
@@ -190,28 +257,6 @@ export default class Survey implements Loadable {
               transaction.set(answerRef, { count: 0 });
             }
           }
-
-          const toAdd = this.difference(this.participants ?? [], participants);
-          const toDelete = this.difference(
-            participants,
-            this.participants ?? []
-          );
-
-          console.log(toAdd, toDelete);
-          const participantsCollectionRef = collection(
-            surveyRef,
-            "participants"
-          );
-          for (const participant of toAdd) {
-            console.log("adding ", participant);
-            const participantRef = doc(participantsCollectionRef, participant);
-            transaction.set(participantRef, {});
-            console.log("added ", participant);
-          }
-          for (const participant of toDelete) {
-            const participantRef = doc(participantsCollectionRef, participant);
-            transaction.delete(participantRef);
-          }
         } catch (e) {
           console.error("Error adding answer: ", e);
         }
@@ -238,8 +283,8 @@ export default class Survey implements Loadable {
 
   async submit(form: FormData, userEmail: string) {
     if (!this.ref) return;
-    const ref = this.ref;
-    runTransaction(db, async (transaction) => {
+    const id = this.id;
+    await runTransaction(db, async (transaction) => {
       this.questions?.map(async (question) => {
         const answerId = form.get(question.title!)?.toString();
         if (!answerId || !question.ref) return;
@@ -248,9 +293,12 @@ export default class Survey implements Loadable {
           count: increment(1),
         });
       });
-      transaction.update(ref, {
-        participants: arrayRemove(userEmail),
-      });
+      const participantsCollection = collection(db, "participants");
+      doc(db, "participants", userEmail);
+      const participantDocRef = doc(participantsCollection, userEmail);
+      const surveysSubcollectionRef = collection(participantDocRef, "surveys");
+      const surveyDocRef = doc(surveysSubcollectionRef, id);
+      transaction.delete(surveyDocRef);
     });
   }
 
@@ -300,5 +348,14 @@ export default class Survey implements Loadable {
 
   get hasVacantQuestion() {
     return this.questions?.some((question) => question.isNotFilled);
+  }
+
+  async setActive() {
+    if (!this.ref) throw new Error("No ref found");
+    await Survey.setActive(this.ref);
+  }
+
+  static async setActive(ref: DocumentReference<DocumentData, DocumentData>) {
+    await updateDoc(ref, { status: SurveyStatus.ACTIVE });
   }
 }

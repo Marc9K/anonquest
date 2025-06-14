@@ -266,7 +266,9 @@ test.describe.serial("creates, assigns and deletes a simple survey", () => {
   });
   test("check survey has saved", async ({ page }) => {
     await auth(page);
-    await page.getByRole("link", { name: survey.title! }).click();
+    await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.getByRole("button", { name: "Close and view results" })).toBeVisible();
   });
   test("check survey is accessable to assignees", async ({ page }) => {
     await auth(page, 1);
