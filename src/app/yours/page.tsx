@@ -20,11 +20,13 @@ export default function Account() {
     : null;
 
   const queryAssigned = user
-    ? query(surveysRef, where("participants", "array-contains", user.email))
+    ? query(surveysRef, where("status", "==", "active"))
     : null;
 
   const [snapshotOwned] = useCollection(queryOwned);
   const [snapshotAssigned] = useCollection(queryAssigned);
+
+  console.log(snapshotAssigned);
 
   if (errorOut) {
     return (

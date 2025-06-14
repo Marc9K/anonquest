@@ -41,7 +41,6 @@ export default function SurveyLink({
                     <Button direction="row">
                       Close and view results <IoStop />
                     </Button>
-                    <Text>awaits {data.participants.length} submitions</Text>
                   </HStack>
                 )}
                 {data.status === SurveyStatus.CLOSED && (
