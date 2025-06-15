@@ -192,7 +192,7 @@ export default class Survey implements Loadable {
               if (
                 existingParticipant &&
                 existingParticipant.exists() &&
-                existingParticipant.data.status
+                existingParticipant.data().status
               )
                 continue;
               transaction.set(participantRef, { status: "added" });
