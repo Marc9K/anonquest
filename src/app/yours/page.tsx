@@ -103,7 +103,7 @@ export default function Account() {
           />
         </Tabs.Content>
         <Tabs.Content value="research">
-          <OptionalGrid title="Your Surveys:" isAdmin data={snapshotOwned} />
+          <OptionalGrid title="Manage Surveys:" isAdmin data={snapshotOwned} />
           <Button
             onClick={async () => {
               router.push("/survey");

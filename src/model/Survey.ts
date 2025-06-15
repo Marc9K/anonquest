@@ -358,4 +358,7 @@ export default class Survey implements Loadable {
   static async setActive(ref: DocumentReference<DocumentData, DocumentData>) {
     await updateDoc(ref, { status: SurveyStatus.ACTIVE });
   }
+  static async setAs(ref: DocumentReference<DocumentData, DocumentData>, status: SurveyStatus) {
+    await updateDoc(ref, { status});
+  }
 }

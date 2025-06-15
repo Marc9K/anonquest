@@ -7,6 +7,8 @@ import Survey from "@/model/Survey";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase";
 import { Spinner } from "@chakra-ui/react";
+import ViewResults from "./VewResults";
+import { SurveyStatus } from "@/model/SurveyStatus";
 
 export default function EditingSurvey() {
   const surveyId = useParams()?.surveyId as string;
@@ -14,16 +16,21 @@ export default function EditingSurvey() {
   const [survey, setSurvey] = useState<Survey | null | undefined>(null);
 
   useEffect(() => {
-    const survey = new Survey(surveyId);
-    survey.load().then(() => {
+    const load = async () => {
+      const survey = new Survey(surveyId);
+      await survey.load();
       setSurvey(survey);
-    });
+    };
+    load();
   }, [surveyId]);
 
   if (!survey) {
     return <Spinner />;
   }
   if (user?.email === survey.ownerEmail) {
+    if (survey.status === SurveyStatus.CLOSED) {
+      return <ViewResults survey={survey} />;
+    }
     return <CreateSurvey existing={survey} />;
   } else {
     return <AnswerSurveyForm survey={survey} />;

@@ -25,15 +25,15 @@ export default function SurveyLink({
   admin?: boolean;
 }) {
   const data = doc.data() as FirestoreSurvey;
-  const router = useRouter();
 
-  const handleClick = () => {
-    router.push(`/survey/${doc.id}`);
+  const publish = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await Survey.setActive(doc.ref);
   };
 
-  const handlePublish = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    await Survey.setActive(doc.ref);
+  const close = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await Survey.setAs(doc.ref, SurveyStatus.CLOSED);
   };
 
   return (
@@ -50,11 +50,7 @@ export default function SurveyLink({
                       <Text>edit</Text>
                       <CiEdit />
                     </Button>
-                    <Button
-                    color='green'
-                      variant="outline"
-                      onClick={handlePublish}
-                    >
+                    <Button color="green" variant="outline" onClick={publish}>
                       <FaPlay />
                       <Text>Publish</Text>
                     </Button>
@@ -62,7 +58,7 @@ export default function SurveyLink({
                 )}
                 {data.status === SurveyStatus.ACTIVE && (
                   <HStack>
-                    <Button direction="row">
+                    <Button direction="row" onClick={close}>
                       Close and view results <IoStop />
                     </Button>
                   </HStack>
