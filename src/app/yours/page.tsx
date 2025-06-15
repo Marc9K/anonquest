@@ -33,9 +33,10 @@ export default function Account() {
     QueryDocumentSnapshot<DocumentData, DocumentData>[]
   >([]);
   useEffect(() => {
-    if (!user?.email) return;
+    const email = user?.email;
+    if (!email) return;
     const fetchParticipantSurveys = async () => {
-      const participantDocRef = doc(db, "participants", user.email);
+      const participantDocRef = doc(db, "participants", email);
       const surveysSubcollectionRef = collection(participantDocRef, "surveys");
       const surveysSnapshot = await getDocs(surveysSubcollectionRef);
       const surveyIds = surveysSnapshot.docs.map((doc) => doc.id);
