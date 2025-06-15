@@ -1,7 +1,6 @@
 import { db } from "../app/firebase";
-import { FirestoreSurvey, type Loadable } from "@/interfaces/firestore";
+import { type Loadable } from "@/interfaces/firestore";
 import {
-  arrayRemove,
   collection,
   deleteDoc,
   doc,
@@ -15,7 +14,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import Question from "./Question";
-import Answer from "./Answer";
 import { SurveyStatus } from "./SurveyStatus";
 
 export default class Survey implements Loadable {
@@ -134,21 +132,19 @@ export default class Survey implements Loadable {
     await deleteDoc(this.ref);
   }
 
-  difference = (a: Set<any> | any[], b: Set<any> | any[]) => {
+  difference = (a: string[], b: string[]) => {
     const setA = new Set(a);
     const setB = new Set(b);
     return [...setA].filter((x) => !setB.has(x));
   };
 
-  async save(form: FormData, byEmail: string) {
+  async save(form: FormData) {
     // if (this.id || this.ref) throw new Error("Survey already exists");
 
     console.log(this);
 
     const title = form.get("title")?.toString() || "";
     const emails = form.get("emails")?.toString() || "";
-
-    console.log(emails);
 
     this.title = title;
     this.participants = emails.split(",").map((email) => email.trim());
@@ -167,11 +163,8 @@ export default class Survey implements Loadable {
 
       await runTransaction(db, async (transaction) => {
         try {
-          const toAdd: string[] = this.difference(
-            this.participants ?? [],
-            participants
-          );
-          const toDelete: string[] = this.difference(
+          const toAdd = this.difference(this.participants ?? [], participants);
+          const toDelete = this.difference(
             participants,
             this.participants ?? []
           );
@@ -215,7 +208,7 @@ export default class Survey implements Loadable {
               const surveyDocRef = doc(surveysSubcollectionRef, surveyRef.id);
               transaction.set(surveyDocRef, {});
             } catch (error) {
-              console.log("Participant in collection");
+              console.log(error);
             }
           }
           for (const participant of toDelete) {
@@ -358,7 +351,10 @@ export default class Survey implements Loadable {
   static async setActive(ref: DocumentReference<DocumentData, DocumentData>) {
     await updateDoc(ref, { status: SurveyStatus.ACTIVE });
   }
-  static async setAs(ref: DocumentReference<DocumentData, DocumentData>, status: SurveyStatus) {
-    await updateDoc(ref, { status});
+  static async setAs(
+    ref: DocumentReference<DocumentData, DocumentData>,
+    status: SurveyStatus
+  ) {
+    await updateDoc(ref, { status });
   }
 }

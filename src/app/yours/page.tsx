@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useAuthState, useSignOut } from "react-firebase-hooks/auth";
-import { useCollection, useDocument } from "react-firebase-hooks/firestore";
+import { useCollection } from "react-firebase-hooks/firestore";
 import { auth, db } from "../firebase";
 import { Button, HStack, Spinner, Stack, Tabs } from "@chakra-ui/react";
 import {

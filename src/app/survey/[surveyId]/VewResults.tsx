@@ -2,8 +2,6 @@
 
 import Survey from "@/model/Survey";
 import { DataList, Heading, Stack } from "@chakra-ui/react";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function ViewResults({ survey }: { survey: Survey }) {
   return (
@@ -19,7 +17,7 @@ export default function ViewResults({ survey }: { survey: Survey }) {
             <DataList.ItemValue>
               <DataList.Root orientation="horizontal">
                 {question.answers.map((answer) => (
-                  <DataList.Item>
+                  <DataList.Item key={answer.title}>
                     <DataList.ItemLabel>{answer.title}</DataList.ItemLabel>
                     <DataList.ItemValue>{answer.count}</DataList.ItemValue>
                   </DataList.Item>
