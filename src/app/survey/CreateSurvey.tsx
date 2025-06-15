@@ -39,7 +39,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
         onSubmit={async (e) => {
           e.preventDefault();
           if (formRef.current && user?.email) {
-            await survey.save(new FormData(formRef.current), user?.email);
+            await survey.save(new FormData(formRef.current));
           }
           router.push("/yours");
         }}
