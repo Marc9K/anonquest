@@ -11,7 +11,8 @@
     "firebase": "firebase emulators:start --only auth,firestore",
     "playtestui": "npx playwright test --project=webkit --ui",
     "playtest": "npx playwright test",
-    "test": "jest --detectOpenHandles --watch"
+    "test": "jest --detectOpenHandles --watch",
+    "deploy-rules": "npx firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.19.1",

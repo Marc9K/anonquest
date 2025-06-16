@@ -3,7 +3,6 @@ import { SurveyStatus } from "@/model/SurveyStatus";
 export interface FirestoreSurvey {
   title: string;
   description: string;
-  participants: string[];
   ownerEmail: string;
   questions?: FirestoreQuestion[];
   status: SurveyStatus;

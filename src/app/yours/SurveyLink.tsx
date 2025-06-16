@@ -8,10 +8,12 @@ import {
 } from "@chakra-ui/react";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { FirestoreSurvey } from "@/interfaces/firestore";
-import { SurveyStatus } from "@/model/Survey";
+import { SurveyStatus } from "@/model/SurveyStatus";
 import { IoStop } from "react-icons/io5";
 import { CiEdit } from "react-icons/ci";
 import { AiOutlineEye } from "react-icons/ai";
+import Survey from "@/model/Survey";
+import { FaPlay } from "react-icons/fa";
 
 export default function SurveyLink({
   doc,
@@ -22,6 +24,17 @@ export default function SurveyLink({
   admin?: boolean;
 }) {
   const data = doc.data() as FirestoreSurvey;
+
+  const publish = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await Survey.setActive(doc.ref);
+  };
+
+  const close = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await Survey.setAs(doc.ref, SurveyStatus.CLOSED);
+  };
+
   return (
     <ChakraLink asChild {...args} padding={3} width="100%" display="block">
       <Link href={`/survey/${doc.id}`}>
@@ -31,17 +44,22 @@ export default function SurveyLink({
             {admin ? (
               <HStack>
                 {data.status === SurveyStatus.PENDING && (
-                  <Button direction="row">
-                    <Text>edit</Text>
-                    <CiEdit />
-                  </Button>
+                  <>
+                    <Button direction="row">
+                      <Text>edit</Text>
+                      <CiEdit />
+                    </Button>
+                    <Button color="green" variant="outline" onClick={publish}>
+                      <FaPlay />
+                      <Text>Publish</Text>
+                    </Button>
+                  </>
                 )}
                 {data.status === SurveyStatus.ACTIVE && (
                   <HStack>
-                    <Button direction="row">
+                    <Button direction="row" onClick={close}>
                       Close and view results <IoStop />
                     </Button>
-                    <Text>awaits {data.participants.length} submitions</Text>
                   </HStack>
                 )}
                 {data.status === SurveyStatus.CLOSED && (

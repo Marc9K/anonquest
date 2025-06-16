@@ -26,6 +26,7 @@ export default class Question implements Loadable {
     this._title = question?.id;
     this.description = question?.data().description ?? "";
     this.ref = question?.ref;
+    this.answers = question?.data().answers?.map((answer: string) => new Answer(undefined, answer)) ?? [];
   }
 
   delete(answer: Answer) {
@@ -42,8 +43,12 @@ export default class Question implements Loadable {
   async load() {
     if (!this.ref) throw new Error("No ref found");
     const answersRef = collection(this.ref, "answers");
-    const answersSnap = await getDocs(answersRef);
-    this.answers = answersSnap.docs.map((doc) => new Answer(doc));
+    try {
+      const answersSnap = await getDocs(answersRef);
+      this.answers = answersSnap.docs.map((doc) => new Answer(doc));
+    } catch (error) {
+      console.error("Error loading answers: ", error);
+    }
   }
 
   static async getAllFrom(

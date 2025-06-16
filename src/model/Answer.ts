@@ -5,9 +5,9 @@ export default class Answer {
   title: string;
   _title?: string;
   count: number;
-  constructor(doc?: QueryDocumentSnapshot<DocumentData, DocumentData>) {
-    this.title = doc?.id ?? "";
-    this._title = doc?.id ?? "";
+  constructor(doc?: QueryDocumentSnapshot<DocumentData, DocumentData>, title?: string) {
+    this.title = doc?.id ?? title ?? "";
+    this._title = doc?.id ?? title ?? "";
     this.count = doc?.data().count ?? 0;
   }
 

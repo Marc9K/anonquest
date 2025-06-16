@@ -2,25 +2,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /surveys/{surveyId} {
-
-      function isAuthed() {
+    function isAuthed() {
         return request.auth != null;
       }
 
-      function isParticipant() {
-        return isAuthed()
-          && exists(/databases/$(database)/documents/surveys/$(surveyId)/participants/$(request.auth.token.email));
+    match /participants/{participantEmail} {
+      function isTheParticipant() {
+        return request.auth.token.email == participantEmail;
       }
 
-      function isOwner() {
-        return isAuthed()
-          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
-      }
+      allow read, write: if isTheParticipant();
 
-      function statusIs(status) {
-        return  'status' in request.resource.data && request.resource.data.status == status 
-          || get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == status;
+      match /surveys/{surveyId} {
+      function isSurveyOwner() {
+        return request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+      }
+        allow create: if isSurveyOwner();
+        allow delete: if isSurveyOwner() || isTheParticipant();
+        allow read: if isTheParticipant();
+      }
+    }
+
+    match /surveys/{surveyId} {
+
+      function statusWillBe(status) {
+        return  'status' in request.resource.data && request.resource.data.status == status;
       }
 
       function isSentValidSurvey() {
@@ -33,27 +39,50 @@ service cloud.firestore {
 
       allow create: if isAuthed() && isSentValidSurvey()
         && request.resource.data.ownerEmail == request.auth.token.email 
-        && statusIs('pending');
+        && statusWillBe('pending');
 
-      allow read: if isOwner() 
-        || (isParticipant() && statusIs('active'));
+      function hasStatus(status) {
+        return resource.data.status == status
+      }
 
-      allow update: if isOwner() 
-        && (statusIs('pending') || (statusIs('active') && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'closed'));
+      function hasOwner() {
+        return isAuthed() 
+                && resource.data.ownerEmail == request.auth.token.email;
+      }
 
-      allow delete: if isOwner();
+      function isParticipant() {
+        return isAuthed()
+          && exists(/databases/$(database)/documents/surveys/$(surveyId)/participants/$(request.auth.token.email));
+      }
+
+      allow read, list: if hasOwner() 
+        || (isParticipant() && hasStatus('active'));
+
+      allow update: if hasOwner() 
+        && ((hasStatus('pending') && (statusWillBe("pending") || statusWillBe('active')) ) || (hasStatus('active') && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'closed'));
+
+      allow delete: if hasOwner();
+
+      function isOwner() {
+        return isAuthed()
+                && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+      }
+
+      function statusIs(status) {
+        return  get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == status;
+      }
 
       match /participants/{participantEmail} {
         allow create: if isOwner() && !statusIs('closed');
 
-        allow read: if isOwner() && statusIs('pending') || request.auth.token.email == participantEmail;
+        allow read: if isOwner() || request.auth.token.email == participantEmail;
 
         allow delete: if isOwner() || request.auth.token.email == participantEmail;
 
       }
 
       match /questions/{questionId} {
-        allow read: if isParticipant() && statusIs('active') || isOwner();
+        allow read: if (isParticipant() && statusIs('active')) || isOwner();
 
         allow create, update, delete: if isOwner() && statusIs('pending');
 
