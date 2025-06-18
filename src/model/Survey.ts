@@ -247,7 +247,7 @@ export default class Survey implements Loadable {
             const answersCollectionRef = collection(questionRef, "answers");
             for (const answer of question.answers ?? []) {
               const answerRef = doc(answersCollectionRef, answer.title);
-              transaction.set(answerRef, { count: 0 });
+              transaction.set(answerRef, { ...answer.firestore, count: 0 });
             }
           }
         } catch (e) {

@@ -184,35 +184,40 @@ async function compare(page: Page, survey: Survey) {
     page.getByRole("textbox", { name: "Participants' emails" })
   ).toHaveValue(survey.participants?.join(", ") ?? "");
 
-  let leftToFind = survey.questions ?? [];
+  // Sort questions by orderIndex
+  const sortedQuestions = [...(survey.questions ?? [])].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
 
-  for (let index = 0; index < (survey.questions?.length ?? 0); index++) {
+  for (let index = 0; index < sortedQuestions.length; index++) {
+    const question = sortedQuestions[index];
     const card = page.getByTestId(`${index}-question-card`);
     const title = await card
       .getByRole("textbox", { name: "Question" })
       .inputValue();
-    const question = leftToFind.find((question) => question.title === title);
-    expect(question).toBeTruthy();
-    leftToFind = leftToFind.filter((q) => q !== question);
+    expect(title).toBe(question.title);
     await expect(
       card.getByRole("textbox", { name: "Description" })
-    ).toHaveValue(question!.description!);
+    ).toHaveValue(question.description!);
 
-    let answersToFond = question!.answers;
+    // Sort answers by orderIndex
+    const sortedAnswers = [...question.answers].sort(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
 
-    for (let index = 0; index < question!.answers.length; index++) {
+    for (
+      let answerIndex = 0;
+      answerIndex < sortedAnswers.length;
+      answerIndex++
+    ) {
+      const answer = sortedAnswers[answerIndex];
       const option = await card
         .getByRole("textbox", { name: "Option" })
-        .nth(index)
+        .nth(answerIndex)
         .inputValue();
-      expect(
-        answersToFond.find((answer) => answer.title === option)
-      ).toBeTruthy();
-      answersToFond = answersToFond.filter((answer) => answer.title !== option);
+      expect(option).toBe(answer.title);
     }
   }
-
-  expect(leftToFind.length).toBe(0);
 }
 
 test.describe.serial("creates and deletes a simple survey", () => {
@@ -268,7 +273,9 @@ test.describe.serial("creates, assigns and deletes a simple survey", () => {
     await auth(page);
     await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
     await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.getByRole("button", { name: "Close and view results" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Close and view results" })
+    ).toBeVisible();
   });
   test("check survey is accessable to assignees", async ({ page }) => {
     await auth(page, 1);

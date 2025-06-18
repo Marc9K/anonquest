@@ -15,6 +15,7 @@ export default class Question implements Loadable {
   title?: string;
   _title?: string;
   description?: string;
+  orderIndex: number = 0;
 
   answers: Answer[] = [];
   answersToDelete: Answer[] = [];
@@ -25,8 +26,12 @@ export default class Question implements Loadable {
     this.title = question?.id ?? "";
     this._title = question?.id;
     this.description = question?.data().description ?? "";
+    this.orderIndex = question?.data().orderIndex ?? 0;
     this.ref = question?.ref;
-    this.answers = question?.data().answers?.map((answer: string) => new Answer(undefined, answer)) ?? [];
+    this.answers =
+      question
+        ?.data()
+        .answers?.map((answer: string) => new Answer(undefined, answer)) ?? [];
   }
 
   delete(answer: Answer) {
@@ -89,6 +94,7 @@ export default class Question implements Loadable {
     copy.title = this.title;
     copy._title = this._title;
     copy.description = this.description;
+    copy.orderIndex = this.orderIndex;
     copy.answers = this.answers;
     copy.answersToDelete = this.answersToDelete;
     copy.ref = this.ref;
@@ -99,12 +105,15 @@ export default class Question implements Loadable {
     return {
       id: this.id,
       collections: {
-        answers: this.answers?.map((answer) => answer.firestore),
+        answers: this.answers
+          ?.sort((a, b) => a.orderIndex - b.orderIndex)
+          .map((answer) => answer.firestore),
       },
       data: {
         title: this.title,
         answers: this.answers?.map((answer) => answer.title),
         description: this.description,
+        orderIndex: this.orderIndex,
       },
     };
   }

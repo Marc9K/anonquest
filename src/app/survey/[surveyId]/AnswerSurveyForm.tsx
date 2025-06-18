@@ -24,8 +24,10 @@ export default function AnswerSurveyForm({ survey }: { survey: Survey }) {
       <Stack gap={3}>
         <Text>{survey.title}</Text>
         <Text>By {survey.ownerEmail}</Text>
-        {survey.questions?.map((question) => (
-          <QuestionCard key={question.title} question={question} />
+        {survey.questions?.map((question, index) => (
+          <div data-testid={`question-card-${index}`}>
+            <QuestionCard key={question.title} question={question} />
+          </div>
         ))}
         <Button type="submit">Submit</Button>
       </Stack>

@@ -61,7 +61,7 @@ export default function CreateQuestionCard({
                 <Field.Label>Answer options</Field.Label>
               </Field.Root>
               <Stack>
-                {questionState.answers?.map((answer) => (
+                {questionState.answers?.map((answer, index) => (
                   <AnswerCard
                     data-testid={`question-answer-option`}
                     // ref={answer.title.length === 0 ? inputRef : undefined}
@@ -72,7 +72,7 @@ export default function CreateQuestionCard({
                         setQuestionState((prev) => prev.deleting(answer));
                         return;
                       }
-
+                      option.orderIndex = index;
                       setQuestionState((prev) =>
                         prev.replacing(answer, option)
                       );
@@ -93,7 +93,12 @@ export default function CreateQuestionCard({
               </Button>
               <Button
                 onClick={() => {
-                  setQuestionState((prev) => prev.addingOption());
+                  setQuestionState((prev) => {
+                    const copy = prev.addingOption();
+                    const lastIndex = copy.answers.length - 1;
+                    copy.answers[lastIndex].orderIndex = lastIndex;
+                    return copy;
+                  });
                   // setTimeout(() => {
                   //   inputRef.current?.focus();
                   // }, 100);

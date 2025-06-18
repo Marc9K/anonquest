@@ -5,10 +5,16 @@ export default class Answer {
   title: string;
   _title?: string;
   count: number;
-  constructor(doc?: QueryDocumentSnapshot<DocumentData, DocumentData>, title?: string) {
+  orderIndex: number = 0;
+
+  constructor(
+    doc?: QueryDocumentSnapshot<DocumentData, DocumentData>,
+    title?: string
+  ) {
     this.title = doc?.id ?? title ?? "";
     this._title = doc?.id ?? title ?? "";
     this.count = doc?.data().count ?? 0;
+    this.orderIndex = doc?.data().orderIndex ?? 0;
   }
 
   equals(other: Answer) {
@@ -18,6 +24,7 @@ export default class Answer {
   renaming(title: string) {
     const copy = new Answer();
     copy.title = title;
+    copy.orderIndex = this.orderIndex;
     return copy;
   }
 
@@ -26,6 +33,7 @@ export default class Answer {
     copy.title = this.title;
     copy._title = this._title;
     copy.count = this.count;
+    copy.orderIndex = this.orderIndex;
     return copy;
   }
 
@@ -34,6 +42,7 @@ export default class Answer {
       id: this.title,
       data: {
         count: this.count,
+        orderIndex: this.orderIndex,
       },
     };
   }

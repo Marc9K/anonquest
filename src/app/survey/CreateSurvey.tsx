@@ -72,6 +72,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                     setSurvey((prev) => prev.deletingQuestion(question));
                     return;
                   }
+                  newQuestion.orderIndex = index;
                   setSurvey((prev) =>
                     prev.replacingQuestion(question, newQuestion)
                   );
@@ -79,7 +80,15 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               />
             ))}
             <Button
-              onClick={() => setSurvey((prev) => prev.addingQuestion())}
+              onClick={() => {
+                setSurvey((prev) => {
+                  const newSurvey = prev.addingQuestion();
+                  if (!newSurvey.questions) return newSurvey;
+                  const lastIndex = newSurvey.questions.length - 1;
+                  newSurvey.questions[lastIndex].orderIndex = lastIndex;
+                  return newSurvey;
+                });
+              }}
               disabled={survey.hasVacantQuestion}
             >
               + Add a question

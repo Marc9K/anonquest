@@ -54,7 +54,7 @@ function sampleSurvey(questions: number = 3, options: number = 3): Survey {
 }
 
 test.describe.serial("Survey lifecycle", () => {
-  const survey = sampleSurvey(1, 2);
+  const survey = sampleSurvey();
 
   test("create a survey", async ({ page }) => {
     const loginPage = new LoginPage(page);
@@ -112,19 +112,20 @@ test.describe.serial("Survey lifecycle", () => {
     await answeringPage.expectTitle(survey.title!);
     await answeringPage.expectOwnerEmail(LoginPage.profiles[0].email);
     await answeringPage.expectSubmitButton();
-    for (const question of survey.questions!) {
-      await expect(answeringPage.page.getByText(question.title!)).toBeVisible();
-      const options = await answeringPage.page
-        .getByRole("combobox")
-        .evaluate((select) =>
-          Array.from((select as HTMLSelectElement).options)
-            .map((option) => option.value)
-            .filter((option) => option !== "")
-        );
+    for (let i = 0; i < (survey.questions?.length ?? 0); i++) {
+      const question = survey.questions![i];
+      const questionCard = answeringPage.page.getByTestId(`question-card-${i}`);
+      await expect(questionCard.getByText(question.title!)).toBeVisible();
+      const combobox = questionCard.getByRole("combobox");
+      const options = await combobox.evaluate((select) =>
+        Array.from((select as HTMLSelectElement).options)
+          .map((option) => option.value)
+          .filter((option) => option !== "")
+      );
       for (const answer of question.answers!) {
         expect(options).toContain(answer.title!);
       }
-      await answeringPage.page.getByRole("combobox").selectOption(options[0]);
+      await combobox.selectOption(options[0]);
     }
     await answeringPage.submit();
   });
