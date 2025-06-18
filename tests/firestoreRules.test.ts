@@ -113,7 +113,6 @@ function surveyRef(id: string, firestore = creatorFirestore) {
 async function createSurvey(id: string, data: any) {
   await testEnv?.withSecurityRulesDisabled(async (context) => {
     const survey = surveyRef(id, context.firestore());
-    console.log(data);
     await setDoc(survey, data);
     await setDoc(
       survey.collection("participants").doc(participant.options.email),

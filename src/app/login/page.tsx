@@ -11,7 +11,6 @@ import {
 import { AbsoluteCenter, Button, HStack, Stack } from "@chakra-ui/react";
 
 export default function LogIn() {
-  // const [logedUser, ,] = useAuthState(auth);
   const router = useRouter();
 
   return (

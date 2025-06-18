@@ -168,7 +168,6 @@ export default class Survey implements Loadable {
             "participants"
           );
 
-          console.log("save", toAdd);
           const participantAdders = toAdd.map((participant) =>
             transaction.get(doc(participantsCollectionRef, participant))
           );
@@ -225,7 +224,6 @@ export default class Survey implements Loadable {
             }
           }
           for (const question of this.questions ?? []) {
-            // Handle question title change
             const questionRef = doc(
               questionsCollectionRef,
               question._title && question._title !== question.title
@@ -233,7 +231,6 @@ export default class Survey implements Loadable {
                 : question.title
             );
 
-            // If title changed, delete old document and create new one
             if (question._title && question._title !== question.title) {
               transaction.delete(questionRef);
               const newQuestionRef = doc(
@@ -242,7 +239,6 @@ export default class Survey implements Loadable {
               );
               transaction.set(newQuestionRef, question.firestore.data);
 
-              // Handle answers for the renamed question
               const answersCollectionRef = collection(
                 newQuestionRef,
                 "answers"
@@ -256,22 +252,19 @@ export default class Survey implements Loadable {
               }
             } else {
               const answersCollectionRef = collection(questionRef, "answers");
-              // Normal case - no title change
+
               if (this.ref && question.answersToDelete) {
                 for (const deleted of new Set(question.answersToDelete)) {
                   if (deleted._title) {
-                    console.log("deleting", deleted);
                     transaction.delete(
                       doc(answersCollectionRef, deleted._title)
                     );
                   }
                 }
               }
-              console.log("question", question);
               transaction.set(questionRef, question.firestore.data);
 
               for (const answer of question.answers ?? []) {
-                // Handle answer title change
                 const hasChanged =
                   answer._title && answer._title !== answer.title;
                 const answerRef = doc(
@@ -279,7 +272,6 @@ export default class Survey implements Loadable {
                   hasChanged ? answer._title : answer.title
                 );
 
-                // If answer title changed, delete old document and create new one
                 if (hasChanged) {
                   transaction.delete(answerRef);
                   const newAnswerRef = doc(answersCollectionRef, answer.title);

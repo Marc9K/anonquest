@@ -18,7 +18,6 @@ export class YoursPage {
   }
 
   async openSurvey(title: string) {
-    // Determine which page to return based on survey status
     const status = await this.getSurveyStatus(title);
     await this.getSurveyCard(title).click();
     await this.page.waitForURL("/survey/*");
