@@ -47,11 +47,12 @@ export class EditingSurveyPage {
 
   private async addOption(page: Locator, option: Answer, index: number) {
     await page.getByRole("button", { name: "+ Add an option" }).click();
-    await page.getByRole("textbox", { name: "Option" }).nth(index).click();
-    await page
+    const optionInput = page
       .getByRole("textbox", { name: "Option" })
-      .nth(index)
-      .fill(option.title);
+      .nth(index);
+    expect(optionInput).toBeVisible();
+    await optionInput.click();
+    await optionInput.fill(option.title);
     await page.press("Tab");
   }
 

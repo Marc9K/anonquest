@@ -37,6 +37,7 @@ export default class Question implements Loadable {
   delete(answer: Answer) {
     this.answersToDelete.push(answer);
     this.answers = this.answers?.filter((a) => a !== answer);
+    console.log("after deleting", answer, this);
   }
 
   deleting(answer: Answer) {
@@ -130,6 +131,8 @@ export default class Question implements Loadable {
     if (this.answers?.find((answer) => answer.equals(newAnswer))) return this;
 
     const index = copy.answers?.findIndex((a) => a.equals(answer));
+
+    copy.answersToDelete.push(answer);
 
     copy.answers?.splice(index!, 1, newAnswer);
 

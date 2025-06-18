@@ -60,8 +60,6 @@ export default function Account() {
   const [snapshotOwned] = useCollection(queryOwned);
   // const [snapshotAssigned] = useCollection(queryAssigned); // Removed old query
 
-  console.log(participantSurveys);
-
   if (errorOut) {
     return (
       <div>
