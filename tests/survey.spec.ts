@@ -80,6 +80,38 @@ test.describe.serial("Survey lifecycle", () => {
     await editingPage.verifySurveyContent(survey);
   });
 
+  test("researcher can update survey: delete question, delete answer, reorder", async ({
+    page,
+  }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+    await loginPage.signInAs(0);
+
+    const yoursPage = new YoursPage(page);
+    let editingPage = (await yoursPage.openSurvey(
+      survey.title!
+    )) as EditingSurveyPage;
+
+    const initialQuestionCount = survey.questions!.length;
+    await editingPage.deleteQuestion(0);
+    await editingPage.update();
+    editingPage = (await yoursPage.openSurvey(
+      survey.title!
+    )) as EditingSurveyPage;
+    await editingPage.verifyQuestionCount(initialQuestionCount - 1);
+
+    const questionToEdit = 0;
+    const initialAnswerCount = survey.questions![questionToEdit].answers.length;
+    await editingPage.deleteAnswer(questionToEdit, 0);
+    await editingPage.update();
+    editingPage = (await yoursPage.openSurvey(
+      survey.title!
+    )) as EditingSurveyPage;
+    await editingPage.verifyAnswerCount(questionToEdit, initialAnswerCount - 1);
+
+    // TODO:Drag to reorder questions
+  });
+
   test("publish survey", async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();

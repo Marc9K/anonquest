@@ -309,7 +309,9 @@ export default class Survey implements Loadable {
       await question.load();
       return question;
     });
-    this.questions = await Promise.all(questionsLoaders);
+    this.questions = (await Promise.all(questionsLoaders)).toSorted(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
   }
 
   async submit(form: FormData, userEmail: string) {

@@ -26,7 +26,7 @@ export default function AnswerCard({
   };
 
   return (
-    <Group attached>
+    <Group attached data-testid={`question-answer-option`}>
       <Input
         ref={ref}
         name="option"

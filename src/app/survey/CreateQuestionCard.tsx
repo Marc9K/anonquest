@@ -94,7 +94,6 @@ export default function CreateQuestionCard({
                   <Stack onMouseDown={(e) => e.stopPropagation()}>
                     {questionState.answers?.map((answer, index) => (
                       <AnswerCard
-                        data-testid={`question-answer-option`}
                         key={answer.title}
                         option={answer}
                         setOption={(option) => {
