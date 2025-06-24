@@ -28,7 +28,6 @@ export default function Account() {
     ? query(surveysRef, where("ownerEmail", "==", user.email))
     : null;
 
-  // New schema: Fetch participant's surveys from the participants collection
   const [participantSurveys, setParticipantSurveys] = useState<
     QueryDocumentSnapshot<DocumentData, DocumentData>[]
   >([]);
@@ -58,9 +57,6 @@ export default function Account() {
   }, [user?.email]);
 
   const [snapshotOwned] = useCollection(queryOwned);
-  // const [snapshotAssigned] = useCollection(queryAssigned); // Removed old query
-
-  console.log(participantSurveys);
 
   if (errorOut) {
     return (

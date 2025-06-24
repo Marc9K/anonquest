@@ -47,11 +47,12 @@ export class EditingSurveyPage {
 
   private async addOption(page: Locator, option: Answer, index: number) {
     await page.getByRole("button", { name: "+ Add an option" }).click();
-    await page.getByRole("textbox", { name: "Option" }).nth(index).click();
-    await page
+    const optionInput = page
       .getByRole("textbox", { name: "Option" })
-      .nth(index)
-      .fill(option.title);
+      .nth(index);
+    expect(optionInput).toBeVisible();
+    await optionInput.click();
+    await optionInput.fill(option.title);
     await page.press("Tab");
   }
 
@@ -121,5 +122,37 @@ export class EditingSurveyPage {
     }
 
     expect(leftToFind.length).toBe(0);
+  }
+
+  async update() {
+    await this.page
+      .getByRole("button", { name: "Update" })
+      .click({ force: true });
+    await this.page.waitForURL("/yours");
+  }
+
+  async deleteQuestion(index: number) {
+    const card = this.page.getByTestId(`${index}-question-card`);
+    await card.getByRole("button", { name: "Delete question" }).click();
+  }
+
+  async verifyQuestionCount(expected: number) {
+    const cards = await this.page
+      .locator('[data-testid$="-question-card"]')
+      .count();
+    expect(cards).toBe(expected);
+  }
+
+  async deleteAnswer(questionIndex: number, answerIndex: number) {
+    const card = this.page.getByTestId(`${questionIndex}-question-card`);
+    const answer = card.getByTestId("question-answer-option").nth(answerIndex);
+    await expect(answer).toBeVisible();
+    await answer.getByLabel("Delete").click();
+  }
+
+  async verifyAnswerCount(questionIndex: number, expected: number) {
+    const card = this.page.getByTestId(`${questionIndex}-question-card`);
+    const answers = await card.getByTestId("question-answer-option").count();
+    expect(answers).toBe(expected);
   }
 }

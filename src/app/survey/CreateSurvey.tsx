@@ -9,6 +9,13 @@ import FieldTextArea from "@/components/FieldTextArea";
 import Survey from "@/model/Survey";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, snapCenterToCursor } from "@dnd-kit/modifiers";
+import { useConstrainedSensors } from "./useConstrainedSensors";
 
 export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [user] = useAuthState(auth);
@@ -17,6 +24,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [survey, setSurvey] = useState(
     existing ?? new Survey(undefined, user?.email)
   );
+  const [isDragging, setIsDragging] = useState(false);
 
   const get = (name: string) => {
     if (!formRef.current) return "";
@@ -31,6 +39,36 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
     await survey.delete();
     router.push("/yours");
   }
+
+  const sensors = useConstrainedSensors();
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setIsDragging(false);
+
+    if (over && active.id !== over.id) {
+      setSurvey((prev) => {
+        const oldIndex =
+          prev.questions?.findIndex((q) => q.title === active.id) ?? -1;
+        const newIndex =
+          prev.questions?.findIndex((q) => q.title === over.id) ?? -1;
+
+        if (oldIndex === -1 || newIndex === -1) return prev;
+
+        const newQuestions = [...(prev.questions ?? [])];
+        const [movedQuestion] = newQuestions.splice(oldIndex, 1);
+        newQuestions.splice(newIndex, 0, movedQuestion);
+
+        newQuestions.forEach((q, index) => {
+          q.orderIndex = index;
+        });
+
+        const newSurvey = prev.copy;
+        newSurvey.questions = newQuestions;
+        return newSurvey;
+      });
+    }
+  };
 
   return (
     <>
@@ -62,24 +100,46 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               label="Participants' emails"
               helper="Please provide comma separated emails"
             />
-            {survey.questions?.map((question, index) => (
-              <CreateQuestionCard
-                index={index}
-                key={question.title}
-                question={question}
-                setQuestion={(newQuestion) => {
-                  if (!newQuestion) {
-                    setSurvey((prev) => prev.deletingQuestion(question));
-                    return;
-                  }
-                  setSurvey((prev) =>
-                    prev.replacingQuestion(question, newQuestion)
-                  );
-                }}
-              />
-            ))}
+            <DndContext
+              onDragStart={() => setIsDragging(true)}
+              onDragEnd={handleDragEnd}
+              modifiers={[snapCenterToCursor, restrictToVerticalAxis]}
+              sensors={sensors}
+            >
+              <SortableContext
+                items={survey.questions?.map((q) => q.title ?? "") ?? []}
+                strategy={verticalListSortingStrategy}
+              >
+                {survey.questions?.map((question, index) => (
+                  <CreateQuestionCard
+                    index={index}
+                    key={question.title}
+                    question={question}
+                    isDragging={isDragging}
+                    setQuestion={(newQuestion) => {
+                      if (!newQuestion) {
+                        setSurvey((prev) => prev.deletingQuestion(question));
+                        return;
+                      }
+                      newQuestion.orderIndex = index;
+                      setSurvey((prev) =>
+                        prev.replacingQuestion(question, newQuestion)
+                      );
+                    }}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
             <Button
-              onClick={() => setSurvey((prev) => prev.addingQuestion())}
+              onClick={() => {
+                setSurvey((prev) => {
+                  const newSurvey = prev.addingQuestion();
+                  if (!newSurvey.questions) return newSurvey;
+                  const lastIndex = newSurvey.questions.length - 1;
+                  newSurvey.questions[lastIndex].orderIndex = lastIndex;
+                  return newSurvey;
+                });
+              }}
               disabled={survey.hasVacantQuestion}
             >
               + Add a question

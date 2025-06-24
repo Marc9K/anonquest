@@ -5,7 +5,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("has home text", async ({ page }) => {
-  // Expect a title "to contain" a substring.
   await expect(page.getByRole("heading")).toHaveText(/Hello world/);
 });
 

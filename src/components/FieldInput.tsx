@@ -12,17 +12,19 @@ export default function FieldInput({
 }: {
   name: string;
   initialValue?: string;
-  label: string;
+  label?: string;
   required?: boolean;
   ref?: Ref<HTMLInputElement>;
 }) {
   const [text, setText] = useState(initialValue ?? "");
   return (
     <Field.Root required={required}>
-      <Field.Label>
-        {label}
-        {required && <Field.RequiredIndicator />}
-      </Field.Label>
+      {label && (
+        <Field.Label>
+          {label}
+          {required && <Field.RequiredIndicator />}
+        </Field.Label>
+      )}
       <Input
         ref={ref}
         name={name}

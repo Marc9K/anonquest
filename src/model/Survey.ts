@@ -139,27 +139,21 @@ export default class Survey implements Loadable {
   };
 
   async save(form: FormData) {
-    // if (this.id || this.ref) throw new Error("Survey already exists");
-
-    console.log(this);
-
     const title = form.get("title")?.toString() || "";
     const emails = form.get("emails")?.toString() || "";
 
     this.title = title;
     this.participants = emails.split(",").map((email) => email.trim());
-    console.log(this.participants);
 
     try {
       const surveyRef = this.id
         ? doc(db, "surveys", this.id)
         : doc(collection(db, "surveys"));
       await setDoc(surveyRef, this.firestore.data);
-      console.log(this.firestore.data);
+
       const questionsCollectionRef = collection(surveyRef, "questions");
 
       const participants = await this.participantsList();
-      console.log(participants);
 
       await runTransaction(db, async (transaction) => {
         try {
@@ -174,12 +168,11 @@ export default class Survey implements Loadable {
             "participants"
           );
 
+          const participantAdders = toAdd.map((participant) =>
+            transaction.get(doc(participantsCollectionRef, participant))
+          );
           const potentialExistingParticipants = (
-            await Promise.allSettled(
-              toAdd.map((participant) =>
-                transaction.get(doc(participantsCollectionRef, participant))
-              )
-            )
+            await Promise.allSettled(participantAdders)
           ).filter((potential) => potential.status == "fulfilled");
 
           const participantsCollection = collection(db, "participants");
@@ -230,24 +223,69 @@ export default class Survey implements Loadable {
               }
             }
           }
-
           for (const question of this.questions ?? []) {
-            const questionRef = doc(questionsCollectionRef, question.title);
-            if (this.ref && question.answersToDelete) {
-              for (const deleted of question.answersToDelete) {
-                if (deleted._title) {
-                  transaction.delete(
-                    doc(questionRef, "answers", deleted._title)
-                  );
+            const questionRef = doc(
+              questionsCollectionRef,
+              question._title && question._title !== question.title
+                ? question._title
+                : question.title
+            );
+
+            if (question._title && question._title !== question.title) {
+              transaction.delete(questionRef);
+              const newQuestionRef = doc(
+                questionsCollectionRef,
+                question.title
+              );
+              transaction.set(newQuestionRef, question.firestore.data);
+
+              const answersCollectionRef = collection(
+                newQuestionRef,
+                "answers"
+              );
+              for (const answer of question.answers ?? []) {
+                const answerRef = doc(answersCollectionRef, answer.title);
+                transaction.set(answerRef, {
+                  ...answer.firestore.data,
+                  count: 0,
+                });
+              }
+            } else {
+              const answersCollectionRef = collection(questionRef, "answers");
+
+              if (this.ref && question.answersToDelete) {
+                for (const deleted of new Set(question.answersToDelete)) {
+                  if (deleted._title) {
+                    transaction.delete(
+                      doc(answersCollectionRef, deleted._title)
+                    );
+                  }
                 }
               }
-            }
-            transaction.set(questionRef, question.firestore.data);
+              transaction.set(questionRef, question.firestore.data);
 
-            const answersCollectionRef = collection(questionRef, "answers");
-            for (const answer of question.answers ?? []) {
-              const answerRef = doc(answersCollectionRef, answer.title);
-              transaction.set(answerRef, { count: 0 });
+              for (const answer of question.answers ?? []) {
+                const hasChanged =
+                  answer._title && answer._title !== answer.title;
+                const answerRef = doc(
+                  answersCollectionRef,
+                  hasChanged ? answer._title : answer.title
+                );
+
+                if (hasChanged) {
+                  transaction.delete(answerRef);
+                  const newAnswerRef = doc(answersCollectionRef, answer.title);
+                  transaction.set(newAnswerRef, {
+                    ...answer.firestore.data,
+                    count: 0,
+                  });
+                } else {
+                  transaction.set(answerRef, {
+                    ...answer.firestore.data,
+                    count: 0,
+                  });
+                }
+              }
             }
           }
         } catch (e) {
@@ -271,7 +309,9 @@ export default class Survey implements Loadable {
       await question.load();
       return question;
     });
-    this.questions = await Promise.all(questionsLoaders);
+    this.questions = (await Promise.all(questionsLoaders)).toSorted(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
   }
 
   async submit(form: FormData, userEmail: string) {
@@ -314,18 +354,12 @@ export default class Survey implements Loadable {
   }
 
   replacingQuestion(question: Question, newQuestion: Question) {
-    const oldQuestions =
-      this.questions?.filter((q) => !q.equals(question)) ?? [];
-    if (oldQuestions.find((q) => q.equals(newQuestion))) return this;
     const copy = this.copy;
     const questionIndex = copy.questions?.findIndex((q) => q.equals(question));
-
-    if (questionIndex) {
+    if (questionIndex !== undefined && questionIndex !== -1) {
       copy.questions?.splice(questionIndex, 1, newQuestion);
-
       return copy.copy;
     }
-
     return copy;
   }
 

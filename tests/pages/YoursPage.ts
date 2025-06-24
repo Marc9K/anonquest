@@ -18,10 +18,10 @@ export class YoursPage {
   }
 
   async openSurvey(title: string) {
-    // Determine which page to return based on survey status
     const status = await this.getSurveyStatus(title);
     await this.getSurveyCard(title).click();
     await this.page.waitForURL("/survey/*");
+    await this.page.getByText("Title").waitFor({ state: "visible" });
     switch (status) {
       case SurveyStatus.PENDING:
         return new EditingSurveyPage(this.page);
@@ -36,7 +36,7 @@ export class YoursPage {
 
   private async getSurveyStatus(title: string): Promise<SurveyStatus> {
     const card = this.getSurveyCard(title);
-
+    await this.page.getByText(title).waitFor({ state: "visible" });
     if (await card.getByRole("button", { name: "Publish" }).isVisible()) {
       return SurveyStatus.PENDING;
     }

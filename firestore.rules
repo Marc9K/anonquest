@@ -87,11 +87,11 @@ service cloud.firestore {
         allow create, update, delete: if isOwner() && statusIs('pending');
 
         match /answers/{answerId} {
-          allow create: if isOwner() && statusIs('pending') && request.resource.data.count == 0 || isParticipant() && statusIs('active') && request.resource.data.count == 1;
+          allow create: if (isOwner() && statusIs('pending') && request.resource.data.count == 0) || (isParticipant() && statusIs('active') && request.resource.data.count == 1);
           allow delete: if isOwner() && statusIs('pending');
           allow read: if isOwner() && !statusIs('active');
 
-          allow update: if isParticipant() && statusIs('active') && request.resource.data.count - 1 == resource.data.count;
+          allow update: if (isOwner() && statusIs('pending') && request.resource.data.count == 0) || (isParticipant() && statusIs('active') && request.resource.data.count - 1 == resource.data.count);
         }
       }
     }
