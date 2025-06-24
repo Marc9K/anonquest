@@ -2,7 +2,7 @@
 
 import Answer from "@/model/Answer";
 import { Button, Group, Input } from "@chakra-ui/react";
-import { Ref } from "react";
+import { Ref, useState, useRef } from "react";
 import { FiDelete } from "react-icons/fi";
 
 export default function AnswerCard({
@@ -14,27 +14,59 @@ export default function AnswerCard({
   setOption: (option: Answer | null) => void;
   ref?: Ref<HTMLInputElement>;
 }) {
+  const [showDelete, setShowDelete] = useState(false);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
   return (
-    <Group attached data-testid={`question-answer-option`}>
+    <Group
+      attached
+      data-testid={`question-answer-option`}
+      onMouseEnter={() => setShowDelete(true)}
+      onMouseLeave={() => setShowDelete(false)}
+    >
       <Input
         ref={ref}
         name="option"
         placeholder="Option"
         value={option.title}
+        onFocus={() => setShowDelete(true)}
+        onBlur={(e) => {
+          if (
+            deleteButtonRef.current &&
+            e.relatedTarget === deleteButtonRef.current
+          ) {
+            return;
+          }
+          setShowDelete(false);
+        }}
         onChange={({ target: { value } }) => {
           setOption(option.renaming(value));
         }}
       />
-      <Button
-        aria-label="Delete"
-        bg="bg.subtle"
-        variant="outline"
-        onClick={() => {
-          setOption(null);
-        }}
-      >
-        <FiDelete />
-      </Button>
+      {showDelete && (
+        <Button
+          ref={deleteButtonRef}
+          aria-label="Delete"
+          bg="bg.subtle"
+          variant="outline"
+          tabIndex={0}
+          onBlur={(e) => {
+            if (
+              ref &&
+              typeof ref !== "function" &&
+              ref.current &&
+              e.relatedTarget === ref.current
+            ) {
+              return;
+            }
+            setShowDelete(false);
+          }}
+          onClick={() => {
+            setOption(null);
+          }}
+        >
+          <FiDelete />
+        </Button>
+      )}
     </Group>
   );
 }
