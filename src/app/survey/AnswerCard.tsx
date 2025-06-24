@@ -2,7 +2,7 @@
 
 import Answer from "@/model/Answer";
 import { Button, Group, Input } from "@chakra-ui/react";
-import { Ref, useState } from "react";
+import { Ref } from "react";
 import { FiDelete } from "react-icons/fi";
 
 export default function AnswerCard({
@@ -14,28 +14,15 @@ export default function AnswerCard({
   setOption: (option: Answer | null) => void;
   ref?: Ref<HTMLInputElement>;
 }) {
-  const [text, setText] = useState(option.title);
-
-  const handleFinish = () => {
-    try {
-      setOption(option.renaming(text));
-    } catch (error) {
-      console.log(error);
-      setText(option.title);
-    }
-  };
-
   return (
     <Group attached data-testid={`question-answer-option`}>
       <Input
         ref={ref}
         name="option"
         placeholder="Option"
-        value={text}
-        onSubmit={handleFinish}
-        onBlur={handleFinish}
+        value={option.title}
         onChange={({ target: { value } }) => {
-          setText(value);
+          setOption(option.renaming(value));
         }}
       />
       <Button

@@ -25,7 +25,11 @@ export default function EditingSurvey() {
   }, [surveyId]);
 
   if (!survey) {
-    return <Spinner />;
+    return (
+      <div data-testid="spinner">
+        <Spinner />
+      </div>
+    );
   }
   if (user?.email === survey.ownerEmail) {
     if (survey.status === SurveyStatus.CLOSED) {
