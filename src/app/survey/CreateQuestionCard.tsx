@@ -1,15 +1,13 @@
 "use client";
 
-import { Button, Card, Field, Fieldset, Stack, Box } from "@chakra-ui/react";
+import { Button, Card, Field, Fieldset, Stack } from "@chakra-ui/react";
 import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
 import Question from "@/model/Question";
-import { DragEndEvent } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useConstrainedSensors } from "./useConstrainedSensors";
 
 export default function CreateQuestionCard({
   question,

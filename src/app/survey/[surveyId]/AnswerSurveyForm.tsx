@@ -25,8 +25,8 @@ export default function AnswerSurveyForm({ survey }: { survey: Survey }) {
         <Text>{survey.title}</Text>
         <Text>By {survey.ownerEmail}</Text>
         {survey.questions?.map((question, index) => (
-          <div data-testid={`question-card-${index}`}>
-            <QuestionCard key={question.title} question={question} />
+          <div key={question.title} data-testid={`question-card-${index}`}>
+            <QuestionCard question={question} />
           </div>
         ))}
         <Button type="submit">Submit</Button>
