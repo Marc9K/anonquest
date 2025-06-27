@@ -16,7 +16,12 @@ export default function OptionalGrid({
     <>
       <HStack>
         <Text>{title}</Text>
-        <Text color="var(--background)" style={{ userSelect: "none" }}>
+        <Text
+          color="var(--background)"
+          style={{ userSelect: "none" }}
+          hideFrom="lg"
+        >
+          {/* Adds width */}
           Lorem ipsum dolor sit amet.
         </Text>
         <Spacer />
