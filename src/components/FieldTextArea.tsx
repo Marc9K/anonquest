@@ -16,7 +16,7 @@ export default function FieldTextArea({
   initialValue?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  label: string;
+  label?: string;
   placeholder?: string;
   helper?: string;
 }) {
@@ -24,7 +24,7 @@ export default function FieldTextArea({
   const isControlled = value !== undefined;
   return (
     <Field.Root>
-      <Field.Label>{label}</Field.Label>
+      {label && <Field.Label>{label}</Field.Label>}
       <Textarea
         name={name}
         value={isControlled ? value : text}

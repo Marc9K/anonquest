@@ -6,6 +6,8 @@ import {
   Collapsible,
   Field,
   Fieldset,
+  HStack,
+  IconButton,
   Stack,
 } from "@chakra-ui/react";
 import { useRef, useState } from "react";
@@ -15,6 +17,8 @@ import FieldTextArea from "@/components/FieldTextArea";
 import Question from "@/model/Question";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { FaPlus } from "react-icons/fa6";
+import { FiDelete } from "react-icons/fi";
 
 export default function CreateQuestionCard({
   question,
@@ -66,6 +70,8 @@ export default function CreateQuestionCard({
 
   const [showMore, setShowMore] = useState(false);
 
+  const padding = 5;
+
   return (
     <Card.Root
       {...attributes}
@@ -85,26 +91,39 @@ export default function CreateQuestionCard({
           )} */}
           <Fieldset.Content>
             <Card.Body>
-              <Card.Title>
-                <FieldInput
-                  data-testid={`question-title`}
-                  label={!isDragging ? "Question" : undefined}
-                  name="title"
-                  value={question.title}
-                  required
-                  onChange={(e) => {
-                    const updated = question.copy;
-                    updated.title = e.target.value;
-                    setQuestion(updated);
-                  }}
-                />
+              <Card.Title paddingBottom={padding}>
+                <HStack>
+                  <FieldInput
+                    data-testid={`question-title`}
+                    // label={!isDragging ? "Question" : undefined}
+                    placeholder="Question"
+                    name="title"
+                    value={question.title}
+                    required
+                    onChange={(e) => {
+                      const updated = question.copy;
+                      updated.title = e.target.value;
+                      setQuestion(updated);
+                    }}
+                  />
+                  <IconButton
+                    aria-label="Delete question"
+                    colorPalette="red"
+                    variant="surface"
+                    onClick={() => {
+                      setQuestion(null);
+                    }}
+                  >
+                    <FiDelete />
+                  </IconButton>
+                </HStack>
               </Card.Title>
               {!isDragging && (
                 <>
-                  <Card.Description>
+                  <Card.Description paddingBottom={padding}>
                     <FieldTextArea
                       data-testid={`question-description`}
-                      label="Description"
+                      placeholder="Description"
                       name="description"
                       value={question.description}
                       onChange={(e) => {
@@ -188,25 +207,18 @@ export default function CreateQuestionCard({
               )}
             </Card.Body>
             {!isDragging && (
-              <Card.Footer justifyContent="space-between">
-                <Button
-                  color="red"
-                  variant="subtle"
-                  onClick={() => {
-                    setQuestion(null);
-                  }}
-                >
-                  Delete question
-                </Button>
-                <Button
+              <Card.Footer justifyContent="flex-end">
+                <IconButton
+                  aria-label="Add an option"
                   onClick={() => {
                     const updated = question.addingOption();
                     setQuestion(updated);
+                    setShowMore(true);
                   }}
                   disabled={question.hasVacantOption}
                 >
-                  + Add an option
-                </Button>
+                  <FaPlus />
+                </IconButton>
               </Card.Footer>
             )}
           </Fieldset.Content>

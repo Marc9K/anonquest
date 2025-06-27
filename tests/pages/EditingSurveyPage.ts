@@ -33,12 +33,10 @@ export class EditingSurveyPage {
   }
 
   private async fillQuestion(page: Locator, question: Question) {
-    await page.getByRole("textbox", { name: "Question" }).click();
-    await page.getByRole("textbox", { name: "Question" }).fill(question.title!);
-    await page.getByRole("textbox", { name: "Description" }).click();
-    await page
-      .getByRole("textbox", { name: "Description" })
-      .fill(question.description!);
+    await page.getByPlaceholder("Question").click();
+    await page.getByPlaceholder("Question").fill(question.title!);
+    await page.getByPlaceholder("Description").click();
+    await page.getByPlaceholder("Description").fill(question.description!);
 
     for (let index = 0; index < question.answers.length; index++) {
       const option = question.answers[index];
@@ -47,10 +45,8 @@ export class EditingSurveyPage {
   }
 
   private async addOption(page: Locator, option: Answer, index: number) {
-    await page.getByRole("button", { name: "+ Add an option" }).click();
-    const optionInput = page
-      .getByRole("textbox", { name: "Option" })
-      .nth(index);
+    await page.getByRole("button", { name: "Add an option" }).click();
+    const optionInput = page.getByPlaceholder("Option").nth(index);
     expect(optionInput).toBeVisible();
     await optionInput.click();
     await optionInput.fill(option.title);
@@ -98,21 +94,19 @@ export class EditingSurveyPage {
 
     for (let index = 0; index < (survey.questions?.length ?? 0); index++) {
       const card = this.page.getByTestId(`${index}-question-card`);
-      const title = await card
-        .getByRole("textbox", { name: "Question" })
-        .inputValue();
+      const title = await card.getByPlaceholder("Question").inputValue();
       const question = leftToFind.find((q: Question) => q.title === title);
       expect(question).toBeTruthy();
       leftToFind = leftToFind.filter((q: Question) => q !== question);
-      await expect(
-        card.getByRole("textbox", { name: "Description" })
-      ).toHaveValue(question!.description!);
+      await expect(card.getByPlaceholder("Description")).toHaveValue(
+        question!.description!
+      );
 
       let answersToFind = question!.answers;
 
       for (let index = 0; index < question!.answers.length; index++) {
         const option = await card
-          .getByRole("textbox", { name: "Option" })
+          .getByPlaceholder("Option")
           .nth(index)
           .inputValue();
         expect(

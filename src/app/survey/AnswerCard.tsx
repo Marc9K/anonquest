@@ -1,7 +1,7 @@
 "use client";
 
 import Answer from "@/model/Answer";
-import { Button, Group, Input } from "@chakra-ui/react";
+import { Button, Group, IconButton, Input } from "@chakra-ui/react";
 import { Ref, useState, useRef } from "react";
 import { FiDelete } from "react-icons/fi";
 
@@ -43,7 +43,7 @@ export default function AnswerCard({
         }}
       />
       {showDelete && (
-        <Button
+        <IconButton
           ref={deleteButtonRef}
           aria-label="Delete"
           bg="bg.subtle"
@@ -65,7 +65,7 @@ export default function AnswerCard({
           }}
         >
           <FiDelete />
-        </Button>
+        </IconButton>
       )}
     </Group>
   );

@@ -11,6 +11,7 @@ export default function FieldInput({
   label,
   required = false,
   ref,
+  placeholder,
 }: {
   name: string;
   initialValue?: string;
@@ -19,6 +20,7 @@ export default function FieldInput({
   label?: string;
   required?: boolean;
   ref?: Ref<HTMLInputElement>;
+  placeholder?: string;
 }) {
   const [text, setText] = useState(initialValue ?? "");
   const isControlled = value !== undefined;
@@ -31,6 +33,7 @@ export default function FieldInput({
         </Field.Label>
       )}
       <Input
+        placeholder={placeholder}
         ref={ref}
         name={name}
         type="text"
