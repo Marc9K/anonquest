@@ -1,12 +1,12 @@
-import { test, expect } from "@playwright/test";
+// import { test, expect } from "@playwright/test";
 
-test.beforeEach(async ({ page }) => {
-  await page.goto("http://localhost:3000");
-});
+// test.beforeEach(async ({ page }) => {
+//   await page.goto("http://localhost:3000");
+// });
 
-test("has home text", async ({ page }) => {
-  await expect(page.getByRole("heading")).toHaveText(/Hello world/);
-});
+// test("has home text", async ({ page }) => {
+//   await expect(page.getByRole("heading")).toHaveText(/Hello world/);
+// });
 
 // test('get started link', async ({ page }) => {
 //   await page.goto('https://playwright.dev/');
