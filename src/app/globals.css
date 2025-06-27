@@ -21,20 +21,26 @@ html {
 main {
   max-width: 1000px;
   width: 100%;
+  grid-area: main;
 }
 
 html,
 body {
   overflow-x: hidden;
-  justify-self: center;
+  display: grid;
+  grid-template-areas: "header" "main";
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
 }
 
 header {
   width: 100%;
+  grid-area: header;
 }
 
 body {
   max-width: 1000px;
+  justify-self: center;
 
   color: var(--foreground);
   background: var(--background);
