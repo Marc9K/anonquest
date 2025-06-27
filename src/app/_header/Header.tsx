@@ -12,7 +12,7 @@ export default function Header() {
 
   const path = usePathname();
   const isYoursPage = path?.includes("/yours");
-  const smallScreen = false; // window.innerWidth < 700;
+  const smallScreen = false;
 
   const account =
     smallScreen && isYoursPage ? (
@@ -34,7 +34,7 @@ export default function Header() {
           <Link href="/faq">FAQ</Link>
           {account}
         </HStack>
-        <HStack hideFrom="lg" justify="space-between" margin={2}>
+        <HStack hideFrom="lg" justify="space-between">
           <Drawer.Root>
             <Drawer.Trigger asChild>
               <Button variant="outline" size="sm">

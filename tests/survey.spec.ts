@@ -94,6 +94,7 @@ test.describe.serial("Survey lifecycle", () => {
 
     const initialQuestionCount = survey.questions!.length;
     await editingPage.deleteQuestion(0);
+    survey.questions = survey.questions!.slice(1);
     await editingPage.update();
     editingPage = (await yoursPage.openSurvey(
       survey.title!
@@ -103,6 +104,8 @@ test.describe.serial("Survey lifecycle", () => {
     const questionToEdit = 0;
     const initialAnswerCount = survey.questions![questionToEdit].answers.length;
     await editingPage.deleteAnswer(questionToEdit, 0);
+    survey.questions![questionToEdit].answers =
+      survey.questions![questionToEdit].answers!.slice(1);
     await editingPage.update();
     editingPage = (await yoursPage.openSurvey(
       survey.title!
@@ -144,7 +147,7 @@ test.describe.serial("Survey lifecycle", () => {
     await answeringPage.expectTitle(survey.title!);
     await answeringPage.expectOwnerEmail(LoginPage.profiles[0].email);
     await answeringPage.expectSubmitButton();
-    for (let i = 0; i < (survey.questions?.length ?? 0); i++) {
+    for (let i = 0; i < survey.questions!.length; i++) {
       const question = survey.questions![i];
       const questionCard = answeringPage.page.getByTestId(`question-card-${i}`);
       await expect(questionCard.getByText(question.title!)).toBeVisible();
@@ -179,9 +182,14 @@ test.describe.serial("Survey lifecycle", () => {
       survey.title!
     )) as ViewingResultsPage;
     await viewingPage.expectTitle(survey.title!);
-    await viewingPage.expectQuestionResults(survey.questions![0].title!, {
-      Red: 1,
-      Blue: 0,
-    });
+    for (let i = 0; i < survey.questions!.length; i++) {
+      const question = survey.questions![i];
+      const results = question.answers!.reduce((acc, answer) => {
+        acc[answer.title!] = 0;
+        return acc;
+      }, {} as Record<string, number>);
+      results[question.answers![0].title!] = 1;
+      await viewingPage.expectQuestionResults(question.title!, results);
+    }
   });
 });

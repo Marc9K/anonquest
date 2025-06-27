@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, Field, Fieldset, Stack } from "@chakra-ui/react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import AnswerCard from "./AnswerCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
@@ -21,7 +21,6 @@ export default function CreateQuestionCard({
   isDragging: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [questionState, setQuestionState] = useState(question);
 
   const {
     attributes,
@@ -50,12 +49,10 @@ export default function CreateQuestionCard({
       onBlur={() => {
         if (!formRef.current) return;
         const formData = new FormData(formRef.current);
-
-        questionState.title = formData.get("title")?.toString() || "";
-        questionState.description =
-          formData.get("description")?.toString() || "";
-
-        setQuestion(questionState);
+        const updated = question.copy;
+        updated.title = formData.get("title")?.toString() || "";
+        updated.description = formData.get("description")?.toString() || "";
+        setQuestion(updated);
       }}
     >
       <form ref={formRef} data-testid={`${index}-question-card`}>
@@ -72,8 +69,13 @@ export default function CreateQuestionCard({
                   data-testid={`question-title`}
                   label={!isDragging ? "Question" : undefined}
                   name="title"
-                  initialValue={question.title}
+                  value={question.title}
                   required
+                  onChange={(e) => {
+                    const updated = question.copy;
+                    updated.title = e.target.value;
+                    setQuestion(updated);
+                  }}
                 />
               </Card.Title>
               {!isDragging && (
@@ -83,28 +85,34 @@ export default function CreateQuestionCard({
                       data-testid={`question-description`}
                       label="Description"
                       name="description"
-                      initialValue={question.description}
+                      value={question.description}
+                      onChange={(e) => {
+                        const updated = question.copy;
+                        updated.description = e.target.value;
+                        setQuestion(updated);
+                      }}
                     />
                   </Card.Description>
                   <Field.Root required>
                     <Field.Label>Answer options</Field.Label>
                   </Field.Root>
                   <Stack onMouseDown={(e) => e.stopPropagation()}>
-                    {questionState.answers?.map((answer, index) => (
+                    {question.answers?.map((answer, index) => (
                       <AnswerCard
-                        key={answer.title}
+                        key={index}
                         option={answer}
                         setOption={(option) => {
                           if (!option) {
-                            setQuestion(questionState.deleting(answer));
-                            setQuestionState((prev) => prev.deleting(answer));
+                            const updatedQuestion = question.deleting(answer);
+                            setQuestion(updatedQuestion);
                             return;
                           }
                           option.orderIndex = index;
-                          setQuestionState((prev) =>
-                            prev.replacing(answer, option)
+                          const updatedQuestion = question.replacing(
+                            answer,
+                            option
                           );
-                          setQuestion(questionState.replacing(answer, option));
+                          setQuestion(updatedQuestion);
                         }}
                       />
                     ))}
@@ -125,12 +133,8 @@ export default function CreateQuestionCard({
                 </Button>
                 <Button
                   onClick={() => {
-                    setQuestionState((prev) => {
-                      const copy = prev.addingOption();
-                      const lastIndex = copy.answers.length - 1;
-                      copy.answers[lastIndex].orderIndex = lastIndex;
-                      return copy;
-                    });
+                    const updated = question.addingOption();
+                    setQuestion(updated);
                   }}
                   disabled={question.hasVacantOption}
                 >

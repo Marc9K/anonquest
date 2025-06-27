@@ -26,7 +26,8 @@ export class EditingSurveyPage {
   }
 
   private async addQuestion(question: Question, index: number) {
-    await this.page.getByRole("button", { name: "+ Add a question" }).click();
+    if (index !== 0)
+      await this.page.getByRole("button", { name: "+ Add a question" }).click();
     const card = this.page.getByTestId(`${index}-question-card`);
     await this.fillQuestion(card, question);
   }
@@ -147,6 +148,7 @@ export class EditingSurveyPage {
     const card = this.page.getByTestId(`${questionIndex}-question-card`);
     const answer = card.getByTestId("question-answer-option").nth(answerIndex);
     await expect(answer).toBeVisible();
+    await answer.hover();
     await answer.getByLabel("Delete").click();
   }
 

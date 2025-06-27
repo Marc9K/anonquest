@@ -21,7 +21,7 @@ export class YoursPage {
     const status = await this.getSurveyStatus(title);
     await this.getSurveyCard(title).click();
     await this.page.waitForURL("/survey/*");
-    await this.page.getByText("Title").waitFor({ state: "visible" });
+    await this.page.getByTestId("spinner").waitFor({ state: "hidden" });
     switch (status) {
       case SurveyStatus.PENDING:
         return new EditingSurveyPage(this.page);
