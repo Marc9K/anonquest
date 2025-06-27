@@ -40,7 +40,7 @@ export default class Survey implements Loadable {
       this.description = "";
       this.participants = [];
       this.ownerEmail = ownerEmail ?? "";
-      this.questions = [];
+      this.questions = [new Question()];
     }
   }
 
@@ -350,6 +350,9 @@ export default class Survey implements Loadable {
     this.questions = this.questions?.filter((q) => !q.equals(question));
     if (!question.isLocal) {
       this.deletedQuestions.push(question);
+    }
+    if (this.questions?.length === 0) {
+      this.questions = [new Question()];
     }
   }
 
