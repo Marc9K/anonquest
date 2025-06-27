@@ -1,7 +1,14 @@
 "use client";
 
-import { Button, Card, Field, Fieldset, Stack } from "@chakra-ui/react";
-import { useRef } from "react";
+import {
+  Button,
+  Card,
+  Collapsible,
+  Field,
+  Fieldset,
+  Stack,
+} from "@chakra-ui/react";
+import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
@@ -38,6 +45,27 @@ export default function CreateQuestionCard({
     cursor: isQuestionDragging ? "grabbing" : "grab",
   };
 
+  const handleBlur = (e: React.FocusEvent) => {
+    // Check if the focus is moving to an element outside the card
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setShowMore(false);
+    }
+
+    // Update form data
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    const updated = question.copy;
+    updated.title = formData.get("title")?.toString() || "";
+    updated.description = formData.get("description")?.toString() || "";
+    setQuestion(updated);
+  };
+
+  // Split answers into always-visible and collapsible
+  const alwaysVisibleAnswers = question.answers.slice(0, 3);
+  const collapsibleAnswers = question.answers.slice(3);
+
+  const [showMore, setShowMore] = useState(false);
+
   return (
     <Card.Root
       {...attributes}
@@ -46,14 +74,7 @@ export default function CreateQuestionCard({
       size="lg"
       ref={setNodeRef}
       style={style}
-      onBlur={() => {
-        if (!formRef.current) return;
-        const formData = new FormData(formRef.current);
-        const updated = question.copy;
-        updated.title = formData.get("title")?.toString() || "";
-        updated.description = formData.get("description")?.toString() || "";
-        setQuestion(updated);
-      }}
+      onBlur={handleBlur}
     >
       <form ref={formRef} data-testid={`${index}-question-card`}>
         <Fieldset.Root size="lg" maxW="md">
@@ -97,7 +118,7 @@ export default function CreateQuestionCard({
                     <Field.Label>Answer options</Field.Label>
                   </Field.Root>
                   <Stack onMouseDown={(e) => e.stopPropagation()}>
-                    {question.answers?.map((answer, index) => (
+                    {alwaysVisibleAnswers.map((answer, index) => (
                       <AnswerCard
                         key={index}
                         option={answer}
@@ -117,6 +138,52 @@ export default function CreateQuestionCard({
                       />
                     ))}
                   </Stack>
+                  {collapsibleAnswers.length > 0 && (
+                    <>
+                      {!showMore && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowMore(true)}
+                        >
+                          ...
+                        </Button>
+                      )}
+                      <Collapsible.Root open={showMore} paddingTop="8px">
+                        <Collapsible.Content>
+                          <Stack onMouseDown={(e) => e.stopPropagation()}>
+                            {collapsibleAnswers.map((answer, i) => (
+                              <AnswerCard
+                                key={i + 3}
+                                option={answer}
+                                setOption={(option) => {
+                                  if (!option) {
+                                    const updatedQuestion =
+                                      question.deleting(answer);
+                                    setQuestion(updatedQuestion);
+                                    return;
+                                  }
+                                  option.orderIndex = i + 3;
+                                  const updatedQuestion = question.replacing(
+                                    answer,
+                                    option
+                                  );
+                                  setQuestion(updatedQuestion);
+                                }}
+                              />
+                            ))}
+                          </Stack>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowMore(false)}
+                          >
+                            Show less
+                          </Button>
+                        </Collapsible.Content>
+                      </Collapsible.Root>
+                    </>
+                  )}
                 </>
               )}
             </Card.Body>
