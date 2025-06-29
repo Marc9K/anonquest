@@ -351,9 +351,9 @@ export default class Survey implements Loadable {
     if (!question.isLocal) {
       this.deletedQuestions.push(question);
     }
-    if (this.questions?.length === 0) {
-      this.questions = [new Question()];
-    }
+    // if (this.questions?.length === 0) {
+    //   this.questions = [new Question()];
+    // }
   }
 
   replacingQuestion(question: Question, newQuestion: Question) {

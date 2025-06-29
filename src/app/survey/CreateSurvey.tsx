@@ -1,7 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button, Fieldset, HStack } from "@chakra-ui/react";
+import {
+  Button,
+  ButtonGroup,
+  Fieldset,
+  HStack,
+  IconButton,
+  Menu,
+  Portal,
+} from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import CreateQuestionCard from "./CreateQuestionCard";
 import FieldInput from "@/components/FieldInput";
@@ -16,6 +24,243 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis, snapCenterToCursor } from "@dnd-kit/modifiers";
 import { useConstrainedSensors } from "./useConstrainedSensors";
+import { LuChevronDown } from "react-icons/lu";
+import { Tooltip } from "@/components/ui/tooltip";
+import { QuestionPrefilled } from "@/model/Question";
+import Answer from "@/model/Answer";
+
+const getPrefilledOptions = (questionType: QuestionPrefilled): string[] => {
+  switch (questionType) {
+    case QuestionPrefilled.ETHNICITY:
+      return [
+        "Asian or Asian British",
+        "Black, Black British, Caribbean or African",
+        "Mixed or multiple ethnic groups",
+        "White",
+        "Other",
+      ];
+    case QuestionPrefilled.RELIGION:
+      return [
+        "Christian",
+        "Muslim",
+        "Hindu",
+        "Buddhist",
+        "Jewish",
+        "Sikh",
+        "None",
+        "Other",
+      ];
+    case QuestionPrefilled.COUNTRY:
+      return [
+        "Afghanistan",
+        "Albania",
+        "Algeria",
+        "Andorra",
+        "Angola",
+        "Antigua and Barbuda",
+        "Argentina",
+        "Armenia",
+        "Australia",
+        "Austria",
+        "Azerbaijan",
+        "Bahamas (The)",
+        "Bahrain",
+        "Bangladesh",
+        "Barbados",
+        "Belarus",
+        "Belgium",
+        "Belize",
+        "Benin",
+        "Bhutan",
+        "Bolivia (Plurinational State of)",
+        "Bosnia and Herzegovina",
+        "Botswana",
+        "Brazil",
+        "Brunei Darussalam",
+        "Bulgaria",
+        "Burkina Faso",
+        "Burundi",
+        "Cabo Verde",
+        "Cambodia",
+        "Cameroon",
+        "Canada",
+        "Central African Republic",
+        "Chad",
+        "Chile",
+        "China",
+        "Colombia",
+        "Comoros",
+        "Congo",
+        "Costa Rica",
+        "Côte D'Ivoire",
+        "Croatia",
+        "Cuba",
+        "Cyprus",
+        "Czechia",
+        "Democratic People's Republic of Korea",
+        "Democratic Republic of the Congo",
+        "Denmark",
+        "Djibouti",
+        "Dominica",
+        "Dominican Republic",
+        "Ecuador",
+        "Egypt",
+        "El Salvador",
+        "Equatorial Guinea",
+        "Eritrea",
+        "Estonia",
+        "Eswatini",
+        "Ethiopia",
+        "Fiji",
+        "Finland",
+        "France",
+        "Gabon",
+        "Gambia (Republic of The)",
+        "Georgia",
+        "Germany",
+        "Ghana",
+        "Greece",
+        "Grenada",
+        "Guatemala",
+        "Guinea",
+        "Guinea Bissau",
+        "Guyana",
+        "Haiti",
+        "Honduras",
+        "Hungary",
+        "Iceland",
+        "India",
+        "Indonesia",
+        "Iran (Islamic Republic of)",
+        "Iraq",
+        "Ireland",
+        "Israel",
+        "Italy",
+        "Jamaica",
+        "Japan",
+        "Jordan",
+        "Kazakhstan",
+        "Kenya",
+        "Kiribati",
+        "Kuwait",
+        "Kyrgyzstan",
+        "Lao People’s Democratic Republic",
+        "Latvia",
+        "Lebanon",
+        "Lesotho",
+        "Liberia",
+        "Libya",
+        "Liechtenstein",
+        "Lithuania",
+        "Luxembourg",
+        "Madagascar",
+        "Malawi",
+        "Malaysia",
+        "Maldives",
+        "Mali",
+        "Malta",
+        "Marshall Islands",
+        "Mauritania",
+        "Mauritius",
+        "Mexico",
+        "Micronesia (Federated States of)",
+        "Monaco",
+        "Mongolia",
+        "Montenegro",
+        "Morocco",
+        "Mozambique",
+        "Myanmar",
+        "Namibia",
+        "Nauru",
+        "Nepal",
+        "Netherlands (Kingdom of the)",
+        "New Zealand",
+        "Nicaragua",
+        "Niger",
+        "Nigeria",
+        "North Macedonia",
+        "Norway",
+        "Oman",
+        "Pakistan",
+        "Palau",
+        "Panama",
+        "Papua New Guinea",
+        "Paraguay",
+        "Peru",
+        "Philippines",
+        "Poland",
+        "Portugal",
+        "Qatar",
+        "Republic of Korea",
+        "Republic of Moldova",
+        "Romania",
+        "Russian Federation",
+        "Rwanda",
+        "Saint Kitts and Nevis",
+        "Saint Lucia",
+        "Saint Vincent and the Grenadines",
+        "Samoa",
+        "San Marino",
+        "Sao Tome and Principe",
+        "Saudi Arabia",
+        "Senegal",
+        "Serbia",
+        "Seychelles",
+        "Sierra Leone",
+        "Singapore",
+        "Slovakia",
+        "Slovenia",
+        "Solomon Islands",
+        "Somalia",
+        "South Africa",
+        "South Sudan",
+        "Spain",
+        "Sri Lanka",
+        "Sudan",
+        "Suriname",
+        "Sweden",
+        "Switzerland",
+        "Syrian Arab Republic",
+        "Tajikistan",
+        "Thailand",
+        "Timor-Leste",
+        "Togo",
+        "Tonga",
+        "Trinidad and Tobago",
+        "Tunisia",
+        "Türkiye",
+        "Turkmenistan",
+        "Tuvalu",
+        "Uganda",
+        "Ukraine",
+        "United Arab Emirates",
+        "United Kingdom of Great Britain and Northern Ireland",
+        "United Republic of Tanzania",
+        "United States of America",
+        "Uruguay",
+        "Uzbekistan",
+        "Vanuatu",
+        "Venezuela, Bolivarian Republic of",
+        "Viet Nam",
+        "Yemen",
+        "Zambia",
+        "Zimbabwe",
+      ];
+
+    case QuestionPrefilled.SEXUAL_ORIENTATION:
+      return [
+        "Heterosexual",
+        "Homosexual",
+        "Bisexual",
+        "Pansexual",
+        "Asexual",
+        "Queer",
+        "Other",
+      ];
+    default:
+      return [];
+  }
+};
 
 export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [user] = useAuthState(auth);
@@ -70,6 +315,40 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
     }
   };
 
+  const addQuestion = () => {
+    setSurvey((prev) => {
+      const newSurvey = prev.addingQuestion();
+      if (!newSurvey.questions) return newSurvey;
+      const lastIndex = newSurvey.questions.length - 1;
+      newSurvey.questions[lastIndex].orderIndex = lastIndex;
+      return newSurvey;
+    });
+  };
+
+  const addPrefilledQuestion = (questionType: QuestionPrefilled) => {
+    const prefilledAnswers = getPrefilledOptions(questionType);
+
+    setSurvey((prev) => {
+      if (prev.questions?.some((q) => q.title === "..." + questionType))
+        return prev;
+      const newSurvey = prev.addingQuestion();
+      if (!newSurvey.questions) return newSurvey;
+      const lastIndex = newSurvey.questions.length - 1;
+      const newQuestion = newSurvey.questions[lastIndex];
+
+      newQuestion.title = "..." + questionType;
+      newQuestion.orderIndex = lastIndex;
+      newQuestion.answers = prefilledAnswers.map((answer, index) => {
+        const answerObj = new Answer();
+        answerObj.title = answer;
+        answerObj.orderIndex = index;
+        return answerObj;
+      });
+
+      return newSurvey;
+    });
+  };
+
   return (
     <>
       <form
@@ -113,7 +392,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 {survey.questions?.map((question, index) => (
                   <CreateQuestionCard
                     index={index}
-                    key={question.title}
+                    key={question.title ?? "" + "-with-index-" + index}
                     question={question}
                     isDragging={isDragging}
                     setQuestion={(newQuestion) => {
@@ -130,20 +409,53 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 ))}
               </SortableContext>
             </DndContext>
-            <Button
-              onClick={() => {
-                setSurvey((prev) => {
-                  const newSurvey = prev.addingQuestion();
-                  if (!newSurvey.questions) return newSurvey;
-                  const lastIndex = newSurvey.questions.length - 1;
-                  newSurvey.questions[lastIndex].orderIndex = lastIndex;
-                  return newSurvey;
-                });
-              }}
-              disabled={survey.hasVacantQuestion}
+            <Tooltip
+              content={
+                survey.hasVacantQuestion
+                  ? "Please fill in all questions or delete empty ones"
+                  : undefined
+              }
             >
-              + Add a question
-            </Button>
+              <ButtonGroup attached>
+                <Button
+                  onClick={addQuestion}
+                  disabled={survey.hasVacantQuestion}
+                >
+                  + Add a question
+                </Button>
+
+                <Menu.Root
+                  onSelect={({ value }) => {
+                    if (value && (value as QuestionPrefilled)) {
+                      addPrefilledQuestion(value as QuestionPrefilled);
+                    }
+                  }}
+                >
+                  <Menu.Trigger disabled={survey.hasVacantQuestion}>
+                    <IconButton
+                      variant="outline"
+                      disabled={survey.hasVacantQuestion}
+                    >
+                      <LuChevronDown />
+                    </IconButton>
+                  </Menu.Trigger>
+                  <Portal>
+                    <Menu.Positioner>
+                      <Menu.Content>
+                        <Menu.ItemGroup>
+                          <Menu.ItemGroupLabel>about</Menu.ItemGroupLabel>
+                          {Object.values(QuestionPrefilled).map((prefill) => (
+                            <Menu.Item key={prefill} value={prefill}>
+                              {prefill}
+                            </Menu.Item>
+                          ))}
+                        </Menu.ItemGroup>
+                      </Menu.Content>
+                    </Menu.Positioner>
+                  </Portal>
+                </Menu.Root>
+              </ButtonGroup>
+            </Tooltip>
           </Fieldset.Content>
           <HStack justify="space-between">
             {!survey.isLocal && (

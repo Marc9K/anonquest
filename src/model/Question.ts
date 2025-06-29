@@ -9,6 +9,17 @@ import {
 import { type Loadable } from "@/interfaces/firestore";
 import Answer from "./Answer";
 
+export enum QuestionType {
+  SINGLE_CHOICE = "single-choice",
+}
+
+export enum QuestionPrefilled {
+  ETHNICITY = "ethnicity",
+  RELIGION = "religion",
+  COUNTRY = "country",
+  SEXUAL_ORIENTATION = "sexual orientation",
+}
+
 export default class Question implements Loadable {
   static fireCollection = "questions";
 
