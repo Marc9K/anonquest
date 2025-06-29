@@ -445,7 +445,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                         <Menu.ItemGroup>
                           <Menu.ItemGroupLabel>about</Menu.ItemGroupLabel>
                           {Object.values(QuestionPrefilled).map((prefill) => (
-                            <Menu.Item value={prefill}>{prefill}</Menu.Item>
+                            <Menu.Item key={prefill} value={prefill}>
+                              {prefill}
+                            </Menu.Item>
                           ))}
                         </Menu.ItemGroup>
                       </Menu.Content>

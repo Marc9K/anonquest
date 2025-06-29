@@ -1,7 +1,7 @@
 "use client";
 
 import Answer from "@/model/Answer";
-import { Button, Group, IconButton, Input } from "@chakra-ui/react";
+import { Group, IconButton, Input } from "@chakra-ui/react";
 import { Ref, useState, useRef } from "react";
 import { FiDelete } from "react-icons/fi";
 
