@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Box,
   Button,
   ButtonGroup,
   Card,
@@ -15,7 +16,6 @@ import {
   Switch,
   Text,
 } from "@chakra-ui/react";
-// Chakra v3 Switch uses namespace: Switch.Root / Switch.Control / Switch.Thumb / Switch.Label
 import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
 import NumericQuestionConfig from "./NumericQuestionConfig";
@@ -27,6 +27,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FaPlus } from "react-icons/fa6";
 import { FiDelete } from "react-icons/fi";
+import { MdDragHandle } from "react-icons/md";
 
 const TYPE_LABELS: Record<QuestionType, string> = {
   [QuestionType.SINGLE_CHOICE]: "Single",
@@ -45,6 +46,35 @@ const DATE_VARIANTS: DateVariant[] = [
   "year-month",
   "year",
 ];
+
+/** HTML input type for the date min/max config fields */
+function dateConfigInputType(variant: DateVariant | undefined): string {
+  switch (variant) {
+    case "time": return "time";
+    case "datetime": return "datetime-local";
+    case "year-month": return "month";
+    case "month-only": return "month";
+    case "year": return "number";
+    default: return "date";
+  }
+}
+
+/** Placeholder hint for the min/max config field */
+function dateConfigPlaceholder(variant: DateVariant | undefined, isMin: boolean): string {
+  switch (variant) {
+    case "time": return isMin ? "00:00" : "23:59";
+    case "datetime": return isMin ? "2020-01-01T00:00" : "2030-12-31T23:59";
+    case "year-month": return isMin ? "2020-01" : "2030-12";
+    case "month-only": return isMin ? "01 (Jan)" : "12 (Dec)";
+    case "year": return isMin ? "2020" : "2030";
+    default: return isMin ? "2020-01-01" : "2030-12-31";
+  }
+}
+
+/** Whether this date variant supports a min/max bound */
+function dateVariantHasMinMax(variant: DateVariant | undefined): boolean {
+  return variant !== "month-only";
+}
 
 export default function CreateQuestionCard({
   question,
@@ -72,7 +102,6 @@ export default function CreateQuestionCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isQuestionDragging ? 0.5 : 1,
-    cursor: isQuestionDragging ? "grabbing" : "grab",
   };
 
   const handleBlur = (e: React.FocusEvent) => {
@@ -147,8 +176,6 @@ export default function CreateQuestionCard({
   return (
     <Card.Root
       {...attributes}
-      {...listeners}
-      cursor="grab"
       size="lg"
       ref={setNodeRef}
       style={style}
@@ -160,6 +187,17 @@ export default function CreateQuestionCard({
             <Card.Body>
               <Card.Title paddingBottom={padding}>
                 <HStack>
+                  {/* Drag handle — only this element initiates drag */}
+                  <Box
+                    {...listeners}
+                    cursor={isQuestionDragging ? "grabbing" : "grab"}
+                    color="fg.muted"
+                    flexShrink={0}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    aria-label="Drag to reorder"
+                  >
+                    <MdDragHandle size={20} />
+                  </Box>
                   <FieldInput
                     data-testid="question-title"
                     placeholder="Question"
@@ -259,34 +297,36 @@ export default function CreateQuestionCard({
                           <NativeSelect.Indicator />
                         </NativeSelect.Root>
                       </Field.Root>
-                      <HStack>
-                        <Field.Root>
-                          <Field.Label>Min</Field.Label>
-                          <Input
-                            type="text"
-                            placeholder="e.g. 2020-01-01"
-                            value={question.dateMin ?? ""}
-                            onChange={(e) => {
-                              const updated = question.copy;
-                              updated.dateMin = e.target.value || undefined;
-                              setQuestion(updated);
-                            }}
-                          />
-                        </Field.Root>
-                        <Field.Root>
-                          <Field.Label>Max</Field.Label>
-                          <Input
-                            type="text"
-                            placeholder="e.g. 2030-12-31"
-                            value={question.dateMax ?? ""}
-                            onChange={(e) => {
-                              const updated = question.copy;
-                              updated.dateMax = e.target.value || undefined;
-                              setQuestion(updated);
-                            }}
-                          />
-                        </Field.Root>
-                      </HStack>
+                      {dateVariantHasMinMax(question.dateVariant) && (
+                        <HStack>
+                          <Field.Root>
+                            <Field.Label>Min</Field.Label>
+                            <Input
+                              type={dateConfigInputType(question.dateVariant)}
+                              placeholder={dateConfigPlaceholder(question.dateVariant, true)}
+                              value={question.dateMin ?? ""}
+                              onChange={(e) => {
+                                const updated = question.copy;
+                                updated.dateMin = e.target.value || undefined;
+                                setQuestion(updated);
+                              }}
+                            />
+                          </Field.Root>
+                          <Field.Root>
+                            <Field.Label>Max</Field.Label>
+                            <Input
+                              type={dateConfigInputType(question.dateVariant)}
+                              placeholder={dateConfigPlaceholder(question.dateVariant, false)}
+                              value={question.dateMax ?? ""}
+                              onChange={(e) => {
+                                const updated = question.copy;
+                                updated.dateMax = e.target.value || undefined;
+                                setQuestion(updated);
+                              }}
+                            />
+                          </Field.Root>
+                        </HStack>
+                      )}
                       <HStack>
                         <Switch.Root
                           checked={question.dateFutureOnly ?? false}

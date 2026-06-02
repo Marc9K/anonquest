@@ -192,7 +192,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 {survey.questions?.map((question, index) => (
                   <CreateQuestionCard
                     index={index}
-                    key={question.title ?? "" + "-with-index-" + index}
+                    key={question.instanceId}
                     question={question}
                     isDragging={isDragging}
                     setQuestion={(newQuestion) => {
@@ -307,6 +307,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                                 updateIntersection(idx, { questionTitles: newTitles });
                               }}
                             >
+                              <Checkbox.HiddenInput />
                               <Checkbox.Control />
                               <Checkbox.Label>{q.title}</Checkbox.Label>
                             </Checkbox.Root>
