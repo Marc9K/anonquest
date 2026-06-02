@@ -6,7 +6,6 @@ import {
   Button,
   ButtonGroup,
   Card,
-  Checkbox,
   Field,
   Fieldset,
   HStack,
@@ -21,7 +20,7 @@ import { useRouter } from "next/navigation";
 import CreateQuestionCard from "./CreateQuestionCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
-import Survey, { Intersection } from "@/model/Survey";
+import Survey, { Intersection, IntersectionGroup } from "@/model/Survey";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -38,44 +37,7 @@ import { QuestionPrefilled } from "@/model/Question";
 import Answer from "@/model/Answer";
 import { getPrefilledOptions } from "@/constants/prefilledOptions";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Toggle a question into/out of an intersection, maintaining the
- * same display order as the survey's question list and keeping
- * the operators array in sync.
- */
-function toggleIntersectionQuestion(
-  intersection: Intersection,
-  questionTitle: string,
-  on: boolean,
-  surveyOrder: string[]
-): Intersection {
-  if (on) {
-    // Insert in survey order
-    const newTitles = surveyOrder.filter(
-      (t) => t === questionTitle || intersection.questionTitles.includes(t)
-    );
-    const insertPos = newTitles.indexOf(questionTitle);
-    const newOps = [...intersection.operators];
-    // splice "and" at insertPos — this places one operator between each consecutive pair
-    newOps.splice(insertPos, 0, "and");
-    return { ...intersection, questionTitles: newTitles, operators: newOps };
-  } else {
-    const removeIdx = intersection.questionTitles.indexOf(questionTitle);
-    const newTitles = intersection.questionTitles.filter(
-      (t) => t !== questionTitle
-    );
-    const newOps = [...intersection.operators];
-    if (newOps.length > 0) {
-      // Remove the operator closest to the removed position
-      newOps.splice(Math.min(removeIdx, newOps.length - 1), 1);
-    }
-    return { ...intersection, questionTitles: newTitles, operators: newOps };
-  }
-}
+// (no module-level helpers needed — logic lives in Survey.ts)
 
 // ---------------------------------------------------------------------------
 // Component
@@ -169,7 +131,11 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
       const c = prev.copy;
       c.intersections = [
         ...c.intersections,
-        { label: "", questionTitles: [], operators: [] } satisfies Intersection,
+        {
+          label: "",
+          groups: [{ questionTitles: [], operator: "and" }],
+          outerOperator: "or",
+        } satisfies Intersection,
       ];
       return c;
     });
@@ -192,10 +158,6 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
       return c;
     });
   };
-
-  const surveyOrder = (survey.questions ?? [])
-    .map((q) => q.title!)
-    .filter(Boolean);
 
   return (
     <>
@@ -319,45 +281,52 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
             </Tooltip>
 
             {/* ── Intersections ── */}
-            <Stack
-              gap={3}
-              role="region"
-              aria-label="Intersection definitions"
-            >
+            <Stack gap={3} role="region" aria-label="Intersection definitions">
               <Field.Root>
                 <Field.Label>Intersections</Field.Label>
                 <Field.HelperText>
-                  Track how answers to different questions combine. Select 2 or
-                  more questions and choose AND / OR between each pair.
+                  Track how combinations of answers occur together. Add groups
+                  of questions, set AND / OR within each group, and choose
+                  whether groups combine with AND or OR.
                 </Field.HelperText>
               </Field.Root>
 
-              {survey.intersections.map((intersection, idx) => {
-                const isInvalid = intersection.questionTitles.length < 2;
+              {survey.intersections.map((intersection, intIdx) => {
+                // all question titles already used in any group of this intersection
+                const usedTitles = new Set(
+                  intersection.groups.flatMap((g) => g.questionTitles)
+                );
+                const availableTitles = (survey.questions ?? [])
+                  .map((q) => q.title!)
+                  .filter((t) => t && !usedTitles.has(t));
+
+                const totalQuestions = intersection.groups.reduce(
+                  (n, g) => n + g.questionTitles.length,
+                  0
+                );
+                const isInvalid = totalQuestions < 2;
+
                 return (
                   <Card.Root
-                    key={intersection.id ?? idx}
+                    key={intersection.id ?? intIdx}
                     variant="outline"
                     borderColor={isInvalid ? "red.300" : undefined}
-                    aria-label={`Intersection ${idx + 1}: ${intersection.label || "untitled"}`}
+                    aria-label={`Intersection ${intIdx + 1}: ${intersection.label || "untitled"}`}
                   >
                     <Card.Body>
-                      {/* Label row */}
+                      {/* Label + remove */}
                       <HStack marginBottom={3}>
                         <Field.Root flex={1}>
-                          <Field.Label htmlFor={`int-label-${idx}`}>
+                          <Field.Label htmlFor={`int-label-${intIdx}`}>
                             Intersection label
                           </Field.Label>
                           <input
-                            id={`int-label-${idx}`}
-                            name={`intersection-label-${idx}`}
+                            id={`int-label-${intIdx}`}
                             placeholder="e.g. Gender × Age"
-                            aria-label={`Label for intersection ${idx + 1}`}
+                            aria-label={`Label for intersection ${intIdx + 1}`}
                             value={intersection.label}
                             onChange={(e) =>
-                              updateIntersection(idx, {
-                                label: e.target.value,
-                              })
+                              updateIntersection(intIdx, { label: e.target.value })
                             }
                             style={{
                               width: "100%",
@@ -370,125 +339,202 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                           />
                         </Field.Root>
                         <IconButton
-                          aria-label={`Remove intersection ${idx + 1}`}
+                          aria-label={`Remove intersection ${intIdx + 1}`}
                           colorPalette="red"
                           variant="ghost"
                           size="sm"
                           alignSelf="flex-end"
-                          onClick={() => removeIntersection(idx)}
+                          onClick={() => removeIntersection(intIdx)}
                         >
                           <FiDelete />
                         </IconButton>
                       </HStack>
 
-                      {/* Question checkboxes */}
-                      <fieldset aria-label="Questions to include in this intersection">
-                        <legend
-                          style={{
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                            marginBottom: "8px",
-                          }}
-                        >
-                          Include questions
-                        </legend>
-                        <Stack direction="row" wrap="wrap" gap={2}>
-                          {(survey.questions ?? [])
-                            .filter((q) => q.title)
-                            .map((q) => (
-                              <Checkbox.Root
-                                key={q.title}
-                                checked={intersection.questionTitles.includes(
-                                  q.title!
-                                )}
-                                onCheckedChange={(details: {
-                                  checked: boolean | "indeterminate";
-                                }) => {
-                                  const on = details.checked === true;
-                                  const updated = toggleIntersectionQuestion(
-                                    intersection,
-                                    q.title!,
-                                    on,
-                                    surveyOrder
-                                  );
-                                  updateIntersection(idx, updated);
-                                }}
-                              >
-                                <Checkbox.HiddenInput
-                                  aria-label={`Include question "${q.title}" in this intersection`}
-                                />
-                                <Checkbox.Control />
-                                <Checkbox.Label>{q.title}</Checkbox.Label>
-                              </Checkbox.Root>
-                            ))}
-                        </Stack>
-                      </fieldset>
-
-                      {/* Logic preview — selected questions + operator selectors */}
-                      {intersection.questionTitles.length >= 2 && (
-                        <Stack
-                          direction="row"
-                          wrap="wrap"
-                          align="center"
-                          gap={2}
-                          marginTop={3}
-                          role="group"
-                          aria-label="Intersection logic preview"
-                        >
-                          {intersection.questionTitles.flatMap((title, i) => {
-                            const items = [
-                              <Badge
-                                key={`q-${title}`}
-                                aria-label={`Question: ${title}`}
-                              >
-                                {title}
-                              </Badge>,
-                            ];
-                            if (i < intersection.questionTitles.length - 1) {
-                              items.push(
-                                <NativeSelect.Root
-                                  key={`op-${i}`}
-                                  size="xs"
-                                  minW="80px"
-                                  aria-label={`Operator between "${title}" and "${intersection.questionTitles[i + 1]}"`}
-                                >
+                      {/* Groups */}
+                      <Stack gap={2}>
+                        {intersection.groups.map((group, gIdx) => (
+                          <Stack key={gIdx} gap={1}>
+                            {/* Between-group outer operator — shown above every group except the first */}
+                            {gIdx > 0 && (
+                              <HStack gap={1} paddingY={1}>
+                                <Text fontSize="xs" color="fg.muted">
+                                  between groups:
+                                </Text>
+                                <NativeSelect.Root size="xs" minW="80px">
                                   <NativeSelect.Field
-                                    value={
-                                      intersection.operators[i] ?? "and"
+                                    value={intersection.outerOperator}
+                                    aria-label="Operator connecting the groups"
+                                    onChange={(e) =>
+                                      updateIntersection(intIdx, {
+                                        outerOperator: e.target.value as "and" | "or",
+                                      })
                                     }
-                                    onChange={(e) => {
-                                      const newOps = [
-                                        ...intersection.operators,
-                                      ];
-                                      newOps[i] = e.target.value as
-                                        | "and"
-                                        | "or";
-                                      updateIntersection(idx, {
-                                        operators: newOps,
-                                      });
-                                    }}
-                                    aria-label={`Logical operator between question ${i + 1} and question ${i + 2}`}
                                   >
-                                    <option value="and">AND</option>
                                     <option value="or">OR</option>
+                                    <option value="and">AND</option>
                                   </NativeSelect.Field>
                                   <NativeSelect.Indicator />
                                 </NativeSelect.Root>
-                              );
-                            }
-                            return items;
-                          })}
-                        </Stack>
-                      )}
+                              </HStack>
+                            )}
+
+                            {/* Group card */}
+                            <Card.Root
+                              variant="subtle"
+                              role="group"
+                              aria-label={`Group ${gIdx + 1} of intersection ${intIdx + 1}`}
+                            >
+                              <Card.Body paddingY={2}>
+                                <HStack justify="space-between" marginBottom={2}>
+                                  <HStack gap={1}>
+                                    <Text fontSize="xs" fontWeight="semibold">
+                                      Group {gIdx + 1}
+                                    </Text>
+                                    <Text fontSize="xs" color="fg.muted">
+                                      — connect questions with:
+                                    </Text>
+                                    <NativeSelect.Root size="xs" minW="80px">
+                                      <NativeSelect.Field
+                                        value={group.operator}
+                                        aria-label={`Inner operator for group ${gIdx + 1}`}
+                                        onChange={(e) => {
+                                          const newGroups = intersection.groups.map(
+                                            (g, i) =>
+                                              i === gIdx
+                                                ? { ...g, operator: e.target.value as "and" | "or" }
+                                                : g
+                                          );
+                                          updateIntersection(intIdx, { groups: newGroups });
+                                        }}
+                                      >
+                                        <option value="and">AND</option>
+                                        <option value="or">OR</option>
+                                      </NativeSelect.Field>
+                                      <NativeSelect.Indicator />
+                                    </NativeSelect.Root>
+                                  </HStack>
+                                  <IconButton
+                                    size="xs"
+                                    variant="ghost"
+                                    colorPalette="red"
+                                    aria-label={`Remove group ${gIdx + 1}`}
+                                    onClick={() => {
+                                      const newGroups = intersection.groups.filter(
+                                        (_, i) => i !== gIdx
+                                      );
+                                      updateIntersection(intIdx, { groups: newGroups });
+                                    }}
+                                  >
+                                    <FiDelete />
+                                  </IconButton>
+                                </HStack>
+
+                                {/* Questions in this group */}
+                                <Stack direction="row" wrap="wrap" gap={1} marginBottom={2}>
+                                  {group.questionTitles.length === 0 && (
+                                    <Text fontSize="xs" color="fg.muted" fontStyle="italic">
+                                      No questions added yet
+                                    </Text>
+                                  )}
+                                  {group.questionTitles.map((title) => (
+                                    <Badge
+                                      key={title}
+                                      display="inline-flex"
+                                      alignItems="center"
+                                      gap={1}
+                                      cursor="default"
+                                      aria-label={`Question in group: ${title}`}
+                                    >
+                                      {title}
+                                      <button
+                                        aria-label={`Remove question "${title}" from group ${gIdx + 1}`}
+                                        style={{
+                                          marginLeft: "4px",
+                                          cursor: "pointer",
+                                          background: "none",
+                                          border: "none",
+                                          padding: 0,
+                                          lineHeight: 1,
+                                          color: "inherit",
+                                        }}
+                                        onClick={() => {
+                                          const newGroups = intersection.groups.map(
+                                            (g, i) =>
+                                              i === gIdx
+                                                ? {
+                                                    ...g,
+                                                    questionTitles: g.questionTitles.filter(
+                                                      (t) => t !== title
+                                                    ),
+                                                  }
+                                                : g
+                                          );
+                                          updateIntersection(intIdx, { groups: newGroups });
+                                        }}
+                                      >
+                                        ×
+                                      </button>
+                                    </Badge>
+                                  ))}
+                                </Stack>
+
+                                {/* Add a question to this group */}
+                                {availableTitles.length > 0 && (
+                                  <NativeSelect.Root size="xs">
+                                    <NativeSelect.Field
+                                      aria-label={`Add a question to group ${gIdx + 1}`}
+                                      value=""
+                                      onChange={(e) => {
+                                        const title = e.target.value;
+                                        if (!title) return;
+                                        const newGroups = intersection.groups.map(
+                                          (g, i) =>
+                                            i === gIdx
+                                              ? {
+                                                  ...g,
+                                                  questionTitles: [...g.questionTitles, title],
+                                                }
+                                              : g
+                                        );
+                                        updateIntersection(intIdx, { groups: newGroups });
+                                      }}
+                                    >
+                                      <option value="">+ Add question…</option>
+                                      {availableTitles.map((t) => (
+                                        <option key={t} value={t}>
+                                          {t}
+                                        </option>
+                                      ))}
+                                    </NativeSelect.Field>
+                                    <NativeSelect.Indicator />
+                                  </NativeSelect.Root>
+                                )}
+                              </Card.Body>
+                            </Card.Root>
+                          </Stack>
+                        ))}
+
+                        {/* Add group */}
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          alignSelf="flex-start"
+                          aria-label={`Add a new group to intersection ${intIdx + 1}`}
+                          onClick={() => {
+                            const newGroups: IntersectionGroup[] = [
+                              ...intersection.groups,
+                              { questionTitles: [], operator: "and" },
+                            ];
+                            updateIntersection(intIdx, { groups: newGroups });
+                          }}
+                        >
+                          + Add group
+                        </Button>
+                      </Stack>
 
                       {isInvalid && (
-                        <Text
-                          color="red.500"
-                          fontSize="sm"
-                          marginTop={2}
-                          role="alert"
-                        >
-                          Select at least 2 questions
+                        <Text color="red.500" fontSize="sm" marginTop={2} role="alert">
+                          Add at least 2 questions across all groups
                         </Text>
                       )}
                     </Card.Body>

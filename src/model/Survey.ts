@@ -23,16 +23,25 @@ import { SurveyStatus } from "./SurveyStatus";
 // Types
 // ---------------------------------------------------------------------------
 
+export interface IntersectionGroup {
+  questionTitles: string[];
+  /** Operator connecting questions inside this group. */
+  operator: "and" | "or";
+}
+
 export interface Intersection {
   id?: string;
   label: string;
-  questionTitles: string[];
   /**
-   * One operator per adjacent pair of questions (length = questionTitles.length - 1).
-   * "and" → both answers must be present; key segment = "&&".
-   * "or"  → missing answer is allowed (stored as ""); key segment = "||".
+   * List of question groups. Each group produces one "clause".
+   * Groups are connected by outerOperator.
+   *
+   * Example: groups=[{Q1,Q2,AND},{Q3,Q4,OR}], outerOperator="or"
+   *   → (Q1&&Q2)||(Q3||Q4)
    */
-  operators: ("and" | "or")[];
+  groups: IntersectionGroup[];
+  /** Operator connecting the groups with each other. */
+  outerOperator: "and" | "or";
   counts?: Record<string, number>;
 }
 
@@ -64,36 +73,59 @@ function sanitizeKeyPart(s: string): string {
 }
 
 /**
- * Build the combination key for one intersection given the submitted answers.
- * Returns null when an AND constraint is violated (missing required answer).
+ * Resolve one group's clause string from submitted answers.
+ * Returns null when an AND-group has a missing answer (whole group fails).
+ */
+function resolveGroupClause(
+  group: IntersectionGroup,
+  submittedAnswers: Map<string, string>
+): string | null {
+  const values = group.questionTitles.map((qt) =>
+    sanitizeKeyPart(submittedAnswers.get(qt) ?? "")
+  );
+  // AND group: every question must be answered
+  if (group.operator === "and" && values.some((v) => v === "")) return null;
+  // All empty (participant skipped everything) → group contributes nothing
+  if (values.every((v) => v === "")) return null;
+  const sep = group.operator === "or" ? "||" : "&&";
+  return values.join(sep);
+}
+
+/**
+ * Build the full combination key for an intersection from submitted answers.
+ * Returns null when the logic constraints aren't met (skip this intersection).
+ *
+ * Key format:
+ *   - single group → just the clause string
+ *   - multiple groups → "(clause1)||(clause2)" or "(clause1)&&(clause2)"
  */
 function buildCombinationKey(
   intersection: Intersection,
   submittedAnswers: Map<string, string>
 ): string | null {
-  const values = intersection.questionTitles.map(
-    (qt) => sanitizeKeyPart(submittedAnswers.get(qt) ?? "")
-  );
+  const clauses: string[] = [];
 
-  // Validate AND constraints
-  for (let i = 0; i < intersection.operators.length; i++) {
-    if (
-      intersection.operators[i] === "and" &&
-      (values[i] === "" || values[i + 1] === "")
-    ) {
-      return null;
+  for (const group of intersection.groups) {
+    const clause = resolveGroupClause(group, submittedAnswers);
+    if (clause === null) {
+      // A group failed. For AND outer, the whole intersection is invalid.
+      if (intersection.outerOperator === "and") return null;
+      // For OR outer, skip this group and keep going.
+      continue;
     }
+    clauses.push(clause);
   }
 
-  // At least one non-empty answer required
-  if (values.every((v) => v === "")) return null;
+  if (clauses.length === 0) return null;
 
-  let key = values[0];
-  for (let i = 1; i < values.length; i++) {
-    const sep = intersection.operators[i - 1] === "or" ? "||" : "&&";
-    key += sep + values[i];
+  if (intersection.outerOperator === "and" && clauses.length < intersection.groups.length) {
+    // Not all groups contributed — AND outer requires all
+    return null;
   }
-  return key;
+
+  const outerSep = intersection.outerOperator === "or" ? "||" : "&&";
+  if (clauses.length === 1) return clauses[0];
+  return clauses.map((c) => `(${c})`).join(outerSep);
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +144,7 @@ export default class Survey implements Loadable {
   questions?: Question[];
   deletedQuestions: Question[] = [];
   intersections: Intersection[] = [];
+
 
   totalParticipants?: number;
   responseCount?: number;
@@ -198,23 +231,46 @@ export default class Survey implements Loadable {
     try {
       const intersectionsRef = collection(surveyRef, "intersections");
       const intersectionsSnap = await getDocs(intersectionsRef);
+      const META_KEYS = new Set([
+        "label", "questionTitles", "operators", "operator",
+        "groups", "outerOperator",
+      ]);
       this.intersections = intersectionsSnap.docs.map((d) => {
+        const data = d.data();
         const counts: Record<string, number> = {};
-        for (const [key, val] of Object.entries(d.data())) {
-          if (
-            !["label", "questionTitles", "operators", "operator"].includes(
-              key
-            ) &&
-            typeof val === "number"
-          ) {
-            counts[key] = val;
-          }
+        for (const [key, val] of Object.entries(data)) {
+          if (!META_KEYS.has(key) && typeof val === "number") counts[key] = val;
         }
+
+        // Migrate old flat format (questionTitles + operators[]) → new grouped format
+        if (data.questionTitles) {
+          const oldOps: ("and" | "or")[] = data.operators ?? [];
+          // Best-effort: split into groups on each OR boundary so precedence is preserved
+          const groups: IntersectionGroup[] = [];
+          let cur: string[] = [];
+          for (let i = 0; i < data.questionTitles.length; i++) {
+            cur.push(data.questionTitles[i]);
+            if (i < oldOps.length && oldOps[i] === "or") {
+              groups.push({ questionTitles: cur, operator: "and" });
+              cur = [];
+            }
+          }
+          if (cur.length) groups.push({ questionTitles: cur, operator: "and" });
+          return {
+            id: d.id,
+            label: data.label ?? "",
+            groups: groups.length ? groups : [{ questionTitles: [], operator: "and" }],
+            outerOperator: "or",
+            counts,
+          };
+        }
+
+        // New grouped format
         return {
           id: d.id,
-          label: d.data().label ?? "",
-          questionTitles: d.data().questionTitles ?? [],
-          operators: d.data().operators ?? [],
+          label: data.label ?? "",
+          groups: (data.groups ?? [{ questionTitles: [], operator: "and" }]) as IntersectionGroup[],
+          outerOperator: (data.outerOperator ?? "or") as "and" | "or",
           counts,
         };
       });
@@ -259,14 +315,12 @@ export default class Survey implements Loadable {
     );
 
     const totalParticipants = participantsSnap.size;
-    const storedIntersections: Intersection[] = intersectionsSnap.docs.map(
-      (d) => ({
-        id: d.id,
-        label: d.data().label ?? "",
-        questionTitles: d.data().questionTitles ?? [],
-        operators: d.data().operators ?? [],
-      })
-    );
+    const storedIntersections: Intersection[] = intersectionsSnap.docs.map((d) => ({
+      id: d.id,
+      label: d.data().label ?? "",
+      groups: (d.data().groups ?? []) as IntersectionGroup[],
+      outerOperator: (d.data().outerOperator ?? "or") as "and" | "or",
+    }));
 
     const batch = writeBatch(db);
     let batchWrites = 0;
@@ -290,48 +344,49 @@ export default class Survey implements Loadable {
         interRef,
         {
           label: intersection.label,
-          questionTitles: intersection.questionTitles,
-          operators: intersection.operators,
+          groups: intersection.groups,
+          outerOperator: intersection.outerOperator,
         },
         { merge: true }
       );
       batchWrites++;
 
-      // Pre-calculate combination keys for fully-discrete intersections
-      const answerSets: string[][] = [];
+      // Pre-calculate all discrete combination keys at count=0.
+      // Skip any intersection whose groups contain TEXT or DATE questions.
+      const allGroupKeys: string[][] = []; // one string[] per group = all possible clause strings
       let hasUnboundedType = false;
 
-      for (const qt of intersection.questionTitles) {
-        const q = questionsWithAnswers.find((q) => q.title === qt);
-        if (
-          !q ||
-          q.type === QuestionType.TEXT ||
-          q.type === QuestionType.DATE
-        ) {
-          hasUnboundedType = true;
-          break;
+      for (const group of intersection.groups) {
+        const groupAnswerSets: string[][] = [];
+        for (const qt of group.questionTitles) {
+          const q = questionsWithAnswers.find((q) => q.title === qt);
+          if (!q || q.type === QuestionType.TEXT || q.type === QuestionType.DATE) {
+            hasUnboundedType = true;
+            break;
+          }
+          const answers = q.answers.map((a) => a.title).filter((t) => t.trim());
+          if (answers.length === 0) { hasUnboundedType = true; break; }
+          groupAnswerSets.push(answers);
         }
-        const answers = q.answers.map((a) => a.title).filter((t) => t.trim());
-        if (answers.length === 0) {
-          hasUnboundedType = true;
-          break;
-        }
-        answerSets.push(answers);
+        if (hasUnboundedType) break;
+
+        // All combos for this group
+        const groupCombos = cartesianProduct(groupAnswerSets);
+        const sep = group.operator === "or" ? "||" : "&&";
+        allGroupKeys.push(groupCombos.map((combo) => combo.join(sep)));
       }
 
-      if (!hasUnboundedType && answerSets.length >= 2) {
-        const combinations = cartesianProduct(answerSets);
-        // Guard against exceeding Firestore batch limit (500 ops total)
-        if (combinations.length <= 400 - batchWrites) {
-          for (const combo of combinations) {
-            let key = combo[0];
-            for (let i = 1; i < combo.length; i++) {
-              const sep =
-                (intersection.operators[i - 1] ?? "and") === "or"
-                  ? "||"
-                  : "&&";
-              key += sep + combo[i];
-            }
+      if (!hasUnboundedType && allGroupKeys.length >= 1) {
+        // Cartesian product across groups → full intersection keys
+        const allIntersectionCombos = cartesianProduct(allGroupKeys);
+        const outerSep = intersection.outerOperator === "or" ? "||" : "&&";
+        const wrap = allGroupKeys.length > 1;
+
+        if (allIntersectionCombos.length <= 400 - batchWrites) {
+          for (const groupClauses of allIntersectionCombos) {
+            const key = wrap
+              ? groupClauses.map((c) => `(${c})`).join(outerSep)
+              : groupClauses[0];
             batch.set(interRef, { [key]: 0 }, { merge: true });
             batchWrites++;
           }
@@ -375,7 +430,8 @@ export default class Survey implements Loadable {
       const updates: Record<string, number> = {};
       for (const [key, val] of Object.entries(data)) {
         if (
-          ["label", "questionTitles", "operators", "operator"].includes(key)
+          ["label", "questionTitles", "operators", "operator",
+           "groups", "outerOperator"].includes(key)
         )
           continue;
         if (typeof val === "number" && val > 0 && val < 3) {
@@ -621,8 +677,8 @@ export default class Survey implements Loadable {
               : doc(intersectionsRef);
             transaction.set(interRef, {
               label: intersection.label,
-              questionTitles: intersection.questionTitles,
-              operators: intersection.operators,
+              groups: intersection.groups,
+              outerOperator: intersection.outerOperator,
             });
             if (!intersection.id) intersection.id = interRef.id;
           }
@@ -773,7 +829,8 @@ export default class Survey implements Loadable {
 
       // Intersection combination counts
       for (const intersection of this.intersections ?? []) {
-        if (!intersection.id || intersection.questionTitles.length < 2)
+        const totalQs = intersection.groups.reduce((n, g) => n + g.questionTitles.length, 0);
+        if (!intersection.id || totalQs < 2)
           continue;
         const combinationKey = buildCombinationKey(
           intersection,
@@ -830,23 +887,14 @@ export default class Survey implements Loadable {
   deletingQuestion(question: Question) {
     const copy = this.copy;
     copy.deleteQuestion(question);
-    // Remove question from each intersection and trim the matching operator
-    copy.intersections = copy.intersections.map((intersection) => {
-      const removeIdx = intersection.questionTitles.indexOf(
-        question.title ?? ""
-      );
-      if (removeIdx === -1) return intersection;
-
-      const newTitles = intersection.questionTitles.filter(
-        (t) => t !== question.title
-      );
-      const newOps = [...intersection.operators];
-      // Remove the operator to the left (or right for the first element)
-      const opIdx = Math.min(removeIdx, newOps.length - 1);
-      if (newOps.length > 0) newOps.splice(opIdx, 1);
-
-      return { ...intersection, questionTitles: newTitles, operators: newOps };
-    });
+    // Remove question from each intersection group
+    copy.intersections = copy.intersections.map((intersection) => ({
+      ...intersection,
+      groups: intersection.groups.map((g) => ({
+        ...g,
+        questionTitles: g.questionTitles.filter((t) => t !== question.title),
+      })),
+    }));
     return copy;
   }
 
@@ -911,8 +959,11 @@ export default class Survey implements Loadable {
     newSurvey.intersections =
       of.intersections?.map((i) => ({
         label: i.label,
-        questionTitles: [...i.questionTitles],
-        operators: [...(i.operators ?? [])],
+        groups: i.groups.map((g) => ({
+          questionTitles: [...g.questionTitles],
+          operator: g.operator,
+        })),
+        outerOperator: i.outerOperator,
       })) ?? [];
     newSurvey.participants = [];
     return newSurvey;

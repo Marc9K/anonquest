@@ -56,7 +56,9 @@ export default function ViewResults({ survey }: { survey: Survey }) {
                       <DataList.ItemLabel>
                         {combinationKey
                           .replace(/&&/g, " AND ")
-                          .replace(/\|\|/g, " OR ")}
+                          .replace(/\|\|/g, " OR ")
+                          .replace(/\(/g, "( ")
+                          .replace(/\)/g, " )")}
                       </DataList.ItemLabel>
                       <DataList.ItemValue color={count === -1 ? "fg.muted" : undefined}>
                         {count === -1 ? "< 3" : count}
