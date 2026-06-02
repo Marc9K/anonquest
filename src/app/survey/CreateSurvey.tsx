@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import {
+  Badge,
   Button,
   ButtonGroup,
   Card,
@@ -11,6 +12,7 @@ import {
   HStack,
   IconButton,
   Menu,
+  NativeSelect,
   Portal,
   Stack,
   Text,
@@ -19,8 +21,7 @@ import { useRouter } from "next/navigation";
 import CreateQuestionCard from "./CreateQuestionCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
-import Survey from "@/model/Survey";
-import { Intersection } from "@/model/Survey";
+import Survey, { Intersection } from "@/model/Survey";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -36,6 +37,49 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { QuestionPrefilled } from "@/model/Question";
 import Answer from "@/model/Answer";
 import { getPrefilledOptions } from "@/constants/prefilledOptions";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Toggle a question into/out of an intersection, maintaining the
+ * same display order as the survey's question list and keeping
+ * the operators array in sync.
+ */
+function toggleIntersectionQuestion(
+  intersection: Intersection,
+  questionTitle: string,
+  on: boolean,
+  surveyOrder: string[]
+): Intersection {
+  if (on) {
+    // Insert in survey order
+    const newTitles = surveyOrder.filter(
+      (t) => t === questionTitle || intersection.questionTitles.includes(t)
+    );
+    const insertPos = newTitles.indexOf(questionTitle);
+    const newOps = [...intersection.operators];
+    // splice "and" at insertPos — this places one operator between each consecutive pair
+    newOps.splice(insertPos, 0, "and");
+    return { ...intersection, questionTitles: newTitles, operators: newOps };
+  } else {
+    const removeIdx = intersection.questionTitles.indexOf(questionTitle);
+    const newTitles = intersection.questionTitles.filter(
+      (t) => t !== questionTitle
+    );
+    const newOps = [...intersection.operators];
+    if (newOps.length > 0) {
+      // Remove the operator closest to the removed position
+      newOps.splice(Math.min(removeIdx, newOps.length - 1), 1);
+    }
+    return { ...intersection, questionTitles: newTitles, operators: newOps };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [user] = useAuthState(auth);
@@ -78,7 +122,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
         const newQuestions = [...(prev.questions ?? [])];
         const [movedQuestion] = newQuestions.splice(oldIndex, 1);
         newQuestions.splice(newIndex, 0, movedQuestion);
-        newQuestions.forEach((q, idx) => { q.orderIndex = idx; });
+        newQuestions.forEach((q, idx) => {
+          q.orderIndex = idx;
+        });
 
         const newSurvey = prev.copy;
         newSurvey.questions = newQuestions;
@@ -123,7 +169,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
       const c = prev.copy;
       c.intersections = [
         ...c.intersections,
-        { label: "", questionTitles: [] } as Intersection,
+        { label: "", questionTitles: [], operators: [] } satisfies Intersection,
       ];
       return c;
     });
@@ -147,10 +193,15 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
     });
   };
 
+  const surveyOrder = (survey.questions ?? [])
+    .map((q) => q.title!)
+    .filter(Boolean);
+
   return (
     <>
       <form
         ref={formRef}
+        aria-label={survey.isLocal ? "New survey form" : "Edit survey form"}
         onSubmit={async (e) => {
           e.preventDefault();
           if (formRef.current && user?.email) {
@@ -160,7 +211,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
         }}
       >
         <Fieldset.Root size="lg" maxW="md">
-          {survey.isLocal && <Fieldset.Legend>New survey</Fieldset.Legend>}
+          {survey.isLocal && (
+            <Fieldset.Legend>New survey</Fieldset.Legend>
+          )}
 
           <Fieldset.Content>
             <FieldInput
@@ -173,12 +226,14 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
             <FieldTextArea
               placeholder="e1@mail.co, e2@mail.co, ..."
               name="emails"
-              initialValue={existing?.participants?.join(", ") ?? get("emails")}
+              initialValue={
+                existing?.participants?.join(", ") ?? get("emails")
+              }
               label="Participants' emails"
-              helper="Please provide comma separated emails"
+              helper="Please provide comma-separated email addresses"
             />
 
-            {/* Questions */}
+            {/* ── Questions ── */}
             <DndContext
               onDragStart={() => setIsDragging(true)}
               onDragEnd={handleDragEnd}
@@ -197,7 +252,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                     isDragging={isDragging}
                     setQuestion={(newQuestion) => {
                       if (!newQuestion) {
-                        setSurvey((prev) => prev.deletingQuestion(question));
+                        setSurvey((prev) =>
+                          prev.deletingQuestion(question)
+                        );
                         return;
                       }
                       newQuestion.orderIndex = index;
@@ -221,6 +278,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 <Button
                   onClick={addQuestion}
                   disabled={survey.hasVacantQuestion}
+                  aria-label="Add a new blank question"
                 >
                   + Add a question
                 </Button>
@@ -235,6 +293,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                     <IconButton
                       variant="outline"
                       disabled={survey.hasVacantQuestion}
+                      aria-label="Add a pre-filled question template"
                     >
                       <LuChevronDown />
                     </IconButton>
@@ -243,7 +302,9 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                     <Menu.Positioner>
                       <Menu.Content>
                         <Menu.ItemGroup>
-                          <Menu.ItemGroupLabel>about</Menu.ItemGroupLabel>
+                          <Menu.ItemGroupLabel>
+                            Pre-filled question templates
+                          </Menu.ItemGroupLabel>
                           {Object.values(QuestionPrefilled).map((prefill) => (
                             <Menu.Item key={prefill} value={prefill}>
                               {prefill}
@@ -257,11 +318,20 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               </ButtonGroup>
             </Tooltip>
 
-            {/* Intersections */}
-            <Field.Root>
-              <Field.Label>Intersections</Field.Label>
-            </Field.Root>
-            <Stack gap={3}>
+            {/* ── Intersections ── */}
+            <Stack
+              gap={3}
+              role="region"
+              aria-label="Intersection definitions"
+            >
+              <Field.Root>
+                <Field.Label>Intersections</Field.Label>
+                <Field.HelperText>
+                  Track how answers to different questions combine. Select 2 or
+                  more questions and choose AND / OR between each pair.
+                </Field.HelperText>
+              </Field.Root>
+
               {survey.intersections.map((intersection, idx) => {
                 const isInvalid = intersection.questionTitles.length < 2;
                 return (
@@ -269,52 +339,155 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                     key={intersection.id ?? idx}
                     variant="outline"
                     borderColor={isInvalid ? "red.300" : undefined}
+                    aria-label={`Intersection ${idx + 1}: ${intersection.label || "untitled"}`}
                   >
                     <Card.Body>
-                      <HStack marginBottom={2}>
-                        <FieldInput
-                          name={`intersection-label-${idx}`}
-                          placeholder="Intersection label"
-                          value={intersection.label}
-                          onChange={(e) =>
-                            updateIntersection(idx, {
-                              label: e.target.value,
-                            })
-                          }
-                        />
+                      {/* Label row */}
+                      <HStack marginBottom={3}>
+                        <Field.Root flex={1}>
+                          <Field.Label htmlFor={`int-label-${idx}`}>
+                            Intersection label
+                          </Field.Label>
+                          <input
+                            id={`int-label-${idx}`}
+                            name={`intersection-label-${idx}`}
+                            placeholder="e.g. Gender × Age"
+                            aria-label={`Label for intersection ${idx + 1}`}
+                            value={intersection.label}
+                            onChange={(e) =>
+                              updateIntersection(idx, {
+                                label: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: "100%",
+                              padding: "6px 12px",
+                              border: "1px solid var(--chakra-colors-border)",
+                              borderRadius: "var(--chakra-radii-md)",
+                              background: "var(--chakra-colors-bg)",
+                              color: "inherit",
+                            }}
+                          />
+                        </Field.Root>
                         <IconButton
-                          aria-label="Remove intersection"
+                          aria-label={`Remove intersection ${idx + 1}`}
                           colorPalette="red"
                           variant="ghost"
                           size="sm"
+                          alignSelf="flex-end"
                           onClick={() => removeIntersection(idx)}
                         >
                           <FiDelete />
                         </IconButton>
                       </HStack>
-                      <Stack direction="row" wrap="wrap" gap={2}>
-                        {survey.questions
-                          ?.filter((q) => q.title)
-                          .map((q) => (
-                            <Checkbox.Root
-                              key={q.title}
-                              checked={intersection.questionTitles.includes(q.title!)}
-                              onCheckedChange={(details: { checked: boolean | "indeterminate" }) => {
-                                const on = details.checked === true;
-                                const newTitles = on
-                                  ? [...intersection.questionTitles, q.title!]
-                                  : intersection.questionTitles.filter((t) => t !== q.title);
-                                updateIntersection(idx, { questionTitles: newTitles });
-                              }}
-                            >
-                              <Checkbox.HiddenInput />
-                              <Checkbox.Control />
-                              <Checkbox.Label>{q.title}</Checkbox.Label>
-                            </Checkbox.Root>
-                          ))}
-                      </Stack>
+
+                      {/* Question checkboxes */}
+                      <fieldset aria-label="Questions to include in this intersection">
+                        <legend
+                          style={{
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            marginBottom: "8px",
+                          }}
+                        >
+                          Include questions
+                        </legend>
+                        <Stack direction="row" wrap="wrap" gap={2}>
+                          {(survey.questions ?? [])
+                            .filter((q) => q.title)
+                            .map((q) => (
+                              <Checkbox.Root
+                                key={q.title}
+                                checked={intersection.questionTitles.includes(
+                                  q.title!
+                                )}
+                                onCheckedChange={(details: {
+                                  checked: boolean | "indeterminate";
+                                }) => {
+                                  const on = details.checked === true;
+                                  const updated = toggleIntersectionQuestion(
+                                    intersection,
+                                    q.title!,
+                                    on,
+                                    surveyOrder
+                                  );
+                                  updateIntersection(idx, updated);
+                                }}
+                              >
+                                <Checkbox.HiddenInput
+                                  aria-label={`Include question "${q.title}" in this intersection`}
+                                />
+                                <Checkbox.Control />
+                                <Checkbox.Label>{q.title}</Checkbox.Label>
+                              </Checkbox.Root>
+                            ))}
+                        </Stack>
+                      </fieldset>
+
+                      {/* Logic preview — selected questions + operator selectors */}
+                      {intersection.questionTitles.length >= 2 && (
+                        <Stack
+                          direction="row"
+                          wrap="wrap"
+                          align="center"
+                          gap={2}
+                          marginTop={3}
+                          role="group"
+                          aria-label="Intersection logic preview"
+                        >
+                          {intersection.questionTitles.flatMap((title, i) => {
+                            const items = [
+                              <Badge
+                                key={`q-${title}`}
+                                aria-label={`Question: ${title}`}
+                              >
+                                {title}
+                              </Badge>,
+                            ];
+                            if (i < intersection.questionTitles.length - 1) {
+                              items.push(
+                                <NativeSelect.Root
+                                  key={`op-${i}`}
+                                  size="xs"
+                                  minW="80px"
+                                  aria-label={`Operator between "${title}" and "${intersection.questionTitles[i + 1]}"`}
+                                >
+                                  <NativeSelect.Field
+                                    value={
+                                      intersection.operators[i] ?? "and"
+                                    }
+                                    onChange={(e) => {
+                                      const newOps = [
+                                        ...intersection.operators,
+                                      ];
+                                      newOps[i] = e.target.value as
+                                        | "and"
+                                        | "or";
+                                      updateIntersection(idx, {
+                                        operators: newOps,
+                                      });
+                                    }}
+                                    aria-label={`Logical operator between question ${i + 1} and question ${i + 2}`}
+                                  >
+                                    <option value="and">AND</option>
+                                    <option value="or">OR</option>
+                                  </NativeSelect.Field>
+                                  <NativeSelect.Indicator />
+                                </NativeSelect.Root>
+                              );
+                            }
+                            return items;
+                          })}
+                        </Stack>
+                      )}
+
                       {isInvalid && (
-                        <Text color="red.500" fontSize="sm" marginTop={1}>
+                        <Text
+                          color="red.500"
+                          fontSize="sm"
+                          marginTop={2}
+                          role="alert"
+                        >
                           Select at least 2 questions
                         </Text>
                       )}
@@ -322,10 +495,12 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                   </Card.Root>
                 );
               })}
+
               <Button
                 variant="outline"
                 alignSelf="flex-start"
                 onClick={addIntersection}
+                aria-label="Add a new intersection"
               >
                 + Add intersection
               </Button>
@@ -339,12 +514,18 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 color="red"
                 alignSelf="flex-start"
                 marginBottom={50}
+                aria-label="Delete this survey permanently"
                 onClick={deleteSurvey}
               >
                 Delete
               </Button>
             )}
-            <Button type="submit" alignSelf="flex-start" marginBottom={50}>
+            <Button
+              type="submit"
+              alignSelf="flex-start"
+              marginBottom={50}
+              aria-label={survey.isLocal ? "Save new survey" : "Update survey"}
+            >
               {survey.isLocal ? "Save" : "Update"}
             </Button>
           </HStack>

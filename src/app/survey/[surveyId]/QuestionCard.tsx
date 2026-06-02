@@ -9,20 +9,20 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-// Chakra v3 uses namespace exports — Checkbox.Root / Checkbox.Control etc.
 import { useState } from "react";
 
 export default function QuestionCard({ question }: { question: Question }) {
-  // Checkbox type needs local state so Yes/No behave like radio buttons
   const [checkboxValue, setCheckboxValue] = useState<string>("");
+
+  const questionId = `question-${question.title?.replace(/\s+/g, "-")}`;
 
   const header = (
     <>
       <Card.Title>
-        <Text>{question.title}</Text>
+        <Text id={`${questionId}-title`}>{question.title}</Text>
       </Card.Title>
       <Card.Header>
-        <Text>{question.description}</Text>
+        <Text id={`${questionId}-desc`}>{question.description}</Text>
       </Card.Header>
     </>
   );
@@ -30,12 +30,17 @@ export default function QuestionCard({ question }: { question: Question }) {
   // NUMERIC
   if (question.isNumeric) {
     return (
-      <Card.Root>
+      <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
         {header}
         <Card.Body>
           <HStack gap={2}>
             {question.numericPrefix && (
-              <Text fontSize="sm" color="fg.muted">
+              <Text
+                fontSize="sm"
+                color="fg.muted"
+                aria-hidden="true"
+                id={`${questionId}-prefix`}
+              >
                 {question.numericPrefix}
               </Text>
             )}
@@ -45,10 +50,35 @@ export default function QuestionCard({ question }: { question: Question }) {
               min={question.numericMin}
               max={question.numericMax}
               placeholder="Enter a number"
+              aria-label={[
+                question.title,
+                question.numericMin !== undefined
+                  ? `minimum ${question.numericMin}`
+                  : "",
+                question.numericMax !== undefined
+                  ? `maximum ${question.numericMax}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              aria-describedby={
+                [
+                  question.numericPrefix ? `${questionId}-prefix` : "",
+                  question.numericSuffix ? `${questionId}-suffix` : "",
+                  question.description ? `${questionId}-desc` : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
               data-testid={`numeric-input-${question.title}`}
             />
             {question.numericSuffix && (
-              <Text fontSize="sm" color="fg.muted">
+              <Text
+                fontSize="sm"
+                color="fg.muted"
+                aria-hidden="true"
+                id={`${questionId}-suffix`}
+              >
                 {question.numericSuffix}
               </Text>
             )}
@@ -61,7 +91,7 @@ export default function QuestionCard({ question }: { question: Question }) {
   // TEXT
   if (question.type === QuestionType.TEXT) {
     return (
-      <Card.Root>
+      <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
         {header}
         <Card.Body>
           <Input
@@ -70,6 +100,10 @@ export default function QuestionCard({ question }: { question: Question }) {
             placeholder="Your answer"
             minLength={question.textMinLength}
             maxLength={question.textMaxLength}
+            aria-label={question.title}
+            aria-describedby={
+              question.description ? `${questionId}-desc` : undefined
+            }
           />
         </Card.Body>
       </Card.Root>
@@ -80,25 +114,36 @@ export default function QuestionCard({ question }: { question: Question }) {
   if (question.type === QuestionType.DATE) {
     const variant = question.dateVariant ?? "date";
 
-    // Month-only: Jan–Dec native select
     if (variant === "month-only") {
       const months = [
-        "January", "February", "March", "April",
-        "May", "June", "July", "August",
-        "September", "October", "November", "December",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
       ];
       return (
-        <Card.Root>
+        <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
           {header}
           <Card.Body>
             <NativeSelect.Root>
-              <NativeSelect.Field name={question.title}>
+              <NativeSelect.Field
+                name={question.title}
+                aria-label={`Select a month for: ${question.title}`}
+                aria-describedby={
+                  question.description ? `${questionId}-desc` : undefined
+                }
+              >
                 <option value="">Select a month</option>
                 {months.map((m, i) => (
-                  <option
-                    key={m}
-                    value={String(i + 1).padStart(2, "0")}
-                  >
+                  <option key={m} value={String(i + 1).padStart(2, "0")}>
                     {m}
                   </option>
                 ))}
@@ -110,10 +155,9 @@ export default function QuestionCard({ question }: { question: Question }) {
       );
     }
 
-    // Year: plain number input
     if (variant === "year") {
       return (
-        <Card.Root>
+        <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
           {header}
           <Card.Body>
             <Input
@@ -122,19 +166,22 @@ export default function QuestionCard({ question }: { question: Question }) {
               placeholder="YYYY"
               min={question.dateMin}
               max={question.dateMax}
+              aria-label={`Year for: ${question.title}`}
+              aria-describedby={
+                question.description ? `${questionId}-desc` : undefined
+              }
             />
           </Card.Body>
         </Card.Root>
       );
     }
 
-    // All other date variants use a native input
     const today = new Date().toISOString().split("T")[0];
     const minAttr = question.dateFutureOnly ? today : question.dateMin;
     const maxAttr = question.datePastOnly ? today : question.dateMax;
 
     return (
-      <Card.Root>
+      <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
         {header}
         <Card.Body>
           <Input
@@ -142,23 +189,33 @@ export default function QuestionCard({ question }: { question: Question }) {
             name={question.title}
             min={minAttr}
             max={maxAttr}
+            aria-label={question.title}
+            aria-describedby={
+              question.description ? `${questionId}-desc` : undefined
+            }
           />
         </Card.Body>
       </Card.Root>
     );
   }
 
-  // MULTI_CHOICE — checkboxes, each answer is its own checkbox
+  // MULTI_CHOICE
   if (question.type === QuestionType.MULTI_CHOICE) {
     return (
-      <Card.Root>
+      <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
         {header}
         <Card.Body>
-          <Stack>
+          <Stack
+            role="group"
+            aria-label={`Select all that apply for: ${question.title}`}
+          >
             {question.answers.map((answer) => (
               <Checkbox.Root key={answer.title}>
-                {/* Native hidden input so form.getAll(name) works */}
-                <Checkbox.HiddenInput name={question.title} value={answer.title} />
+                <Checkbox.HiddenInput
+                  name={question.title}
+                  value={answer.title}
+                  aria-label={answer.title}
+                />
                 <Checkbox.Control />
                 <Checkbox.Label>{answer.title}</Checkbox.Label>
               </Checkbox.Root>
@@ -172,25 +229,25 @@ export default function QuestionCard({ question }: { question: Question }) {
   // CHECKBOX — two distinct buttons; neither = skip
   if (question.type === QuestionType.CHECKBOX) {
     return (
-      <Card.Root>
+      <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
         {header}
         <Card.Body>
-          {/* Hidden input carries the chosen value */}
           <input type="hidden" name={question.title} value={checkboxValue} />
-          <HStack>
+          <HStack
+            role="group"
+            aria-label={`Yes or No for: ${question.title}`}
+          >
             <Button
               variant={checkboxValue === "Yes" ? "solid" : "outline"}
-              onClick={() =>
-                setCheckboxValue((v) => (v === "Yes" ? "" : "Yes"))
-              }
+              aria-pressed={checkboxValue === "Yes"}
+              onClick={() => setCheckboxValue((v) => (v === "Yes" ? "" : "Yes"))}
             >
               Yes
             </Button>
             <Button
               variant={checkboxValue === "No" ? "solid" : "outline"}
-              onClick={() =>
-                setCheckboxValue((v) => (v === "No" ? "" : "No"))
-              }
+              aria-pressed={checkboxValue === "No"}
+              onClick={() => setCheckboxValue((v) => (v === "No" ? "" : "No"))}
             >
               No
             </Button>
@@ -202,14 +259,18 @@ export default function QuestionCard({ question }: { question: Question }) {
 
   // SINGLE_CHOICE (default)
   return (
-    <Card.Root>
+    <Card.Root role="group" aria-labelledby={`${questionId}-title`}>
       {header}
       <Card.Body>
         <NativeSelect.Root>
-          <NativeSelect.Field name={question.title}>
-            <option key="" value="">
-              {" "}
-            </option>
+          <NativeSelect.Field
+            name={question.title}
+            aria-label={question.title}
+            aria-describedby={
+              question.description ? `${questionId}-desc` : undefined
+            }
+          >
+            <option value=""> </option>
             {question.answers?.map((answer) => (
               <option key={answer.title} value={answer.title}>
                 {answer.title}

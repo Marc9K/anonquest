@@ -49,11 +49,14 @@ export default function ViewResults({ survey }: { survey: Survey }) {
             <Stack key={intersection.id} gap={2}>
               <Text fontWeight="semibold">{intersection.label}</Text>
               <DataList.Root orientation="horizontal" maxW="md">
+                {/* counts keys use && / || separators: replace with readable " AND " / " OR " */}
                 {Object.entries(intersection.counts ?? {}).map(
                   ([combinationKey, count]) => (
                     <DataList.Item key={combinationKey}>
                       <DataList.ItemLabel>
-                        {combinationKey.replace(/\|/g, " × ")}
+                        {combinationKey
+                          .replace(/&&/g, " AND ")
+                          .replace(/\|\|/g, " OR ")}
                       </DataList.ItemLabel>
                       <DataList.ItemValue color={count === -1 ? "fg.muted" : undefined}>
                         {count === -1 ? "< 3" : count}

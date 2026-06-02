@@ -229,12 +229,24 @@ export default function CreateQuestionCard({
                     onMouseDown={(e) => e.stopPropagation()}
                   >
                     <Field.Root>
-                      <Field.Label>Type</Field.Label>
+                      <Field.Label id={`type-label-${question.instanceId}`}>
+                        Question type
+                      </Field.Label>
                     </Field.Root>
-                    <ButtonGroup size="sm" variant="outline" attached wrap="wrap">
+                    <ButtonGroup
+                      size="sm"
+                      variant="outline"
+                      attached
+                      wrap="wrap"
+                      role="radiogroup"
+                      aria-labelledby={`type-label-${question.instanceId}`}
+                    >
                       {Object.values(QuestionType).map((type) => (
                         <Button
                           key={type}
+                          role="radio"
+                          aria-checked={question.type === type}
+                          aria-label={`Set question type to ${TYPE_LABELS[type]}`}
                           variant={
                             question.type === type ? "solid" : "outline"
                           }
@@ -277,9 +289,13 @@ export default function CreateQuestionCard({
                       onMouseDown={(e) => e.stopPropagation()}
                     >
                       <Field.Root>
-                        <Field.Label>Variant</Field.Label>
+                        <Field.Label htmlFor={`date-variant-${question.instanceId}`}>
+                          Date variant
+                        </Field.Label>
                         <NativeSelect.Root>
                           <NativeSelect.Field
+                            id={`date-variant-${question.instanceId}`}
+                            aria-label="Choose which part of a date participants select"
                             value={question.dateVariant ?? "date"}
                             onChange={(e) => {
                               const updated = question.copy;
@@ -421,7 +437,9 @@ export default function CreateQuestionCard({
                   {question.hasAnswerOptions && (
                     <>
                       <Field.Root required>
-                        <Field.Label>Answer options</Field.Label>
+                        <Field.Label id={`opts-label-${question.instanceId}`}>
+                          Answer options
+                        </Field.Label>
                       </Field.Root>
                       <Stack onMouseDown={(e) => e.stopPropagation()}>
                         {alwaysVisibleAnswers.map((answer, i) => (
@@ -492,7 +510,8 @@ export default function CreateQuestionCard({
             {!isDragging && question.hasAnswerOptions && (
               <Card.Footer justifyContent="flex-end">
                 <IconButton
-                  aria-label="Add an option"
+                  aria-label="Add a new answer option"
+                  aria-describedby={`opts-label-${question.instanceId}`}
                   onClick={() => {
                     setQuestion(question.addingOption());
                     setShowMore(true);

@@ -43,38 +43,52 @@ export default function ManageSurvey({ survey }: { survey: Survey }) {
   };
 
   return (
-    <Stack gap={5} maxW="md">
+    <Stack gap={5} maxW="md" role="main" aria-label={`Managing survey: ${survey.title}`}>
       <Heading>{survey.title}</Heading>
 
       {survey.publishedAt && (
-        <Text color="fg.muted" fontSize="sm">
+        <Text color="fg.muted" fontSize="sm" aria-label="Survey publication date">
           Published:{" "}
-          {survey.publishedAt.toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          <time dateTime={survey.publishedAt.toISOString()}>
+            {survey.publishedAt.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </time>
         </Text>
       )}
 
-      <Stack gap={1}>
-        <Text fontWeight="semibold">Remaining participants</Text>
-        <Text>{survey.participants?.length ?? 0}</Text>
+      <Stack gap={1} role="status" aria-label="Remaining participants count">
+        <Text fontWeight="semibold" id="remaining-label">
+          Remaining participants
+        </Text>
+        <Text aria-labelledby="remaining-label">
+          {survey.participants?.length ?? 0}
+        </Text>
       </Stack>
 
-      <Stack gap={2}>
-        <Text fontWeight="semibold">Add more responders</Text>
+      <Stack gap={2} role="region" aria-label="Add more survey participants">
+        <Text fontWeight="semibold" id="add-label">
+          Add more responders
+        </Text>
         <Textarea
           placeholder="e1@mail.co, e2@mail.co, ..."
           value={emailsInput}
           onChange={(e) => setEmailsInput(e.target.value)}
           rows={3}
+          aria-labelledby="add-label"
+          aria-describedby="add-help"
         />
+        <Text id="add-help" fontSize="xs" color="fg.muted">
+          Comma-separated email addresses
+        </Text>
         <Button
           onClick={handleAddParticipants}
           loading={adding}
           disabled={!emailsInput.trim()}
           alignSelf="flex-start"
+          aria-label="Send survey invitations to the listed email addresses"
         >
           Add participants
         </Button>
@@ -86,6 +100,7 @@ export default function ManageSurvey({ survey }: { survey: Survey }) {
         alignSelf="flex-start"
         onClick={handleClose}
         loading={closing}
+        aria-label="Close this survey and apply the minimum-response privacy rule"
       >
         Close survey
       </Button>

@@ -19,12 +19,20 @@ import Question, { QuestionType } from "./Question";
 import Answer from "./Answer";
 import { SurveyStatus } from "./SurveyStatus";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export interface Intersection {
   id?: string;
   label: string;
   questionTitles: string[];
-  operator?: "and";
-  /** Combination key → count; populated on load for CLOSED surveys. */
+  /**
+   * One operator per adjacent pair of questions (length = questionTitles.length - 1).
+   * "and" → both answers must be present; key segment = "&&".
+   * "or"  → missing answer is allowed (stored as ""); key segment = "||".
+   */
+  operators: ("and" | "or")[];
   counts?: Record<string, number>;
 }
 
@@ -34,6 +42,63 @@ interface AnswerToProcess {
   numericValue?: number;
   needsCreation: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Module-level helpers
+// ---------------------------------------------------------------------------
+
+/** Cartesian product of string arrays. */
+function cartesianProduct(sets: string[][]): string[][] {
+  return sets.reduce<string[][]>(
+    (acc, set) => acc.flatMap((combo) => set.map((item) => [...combo, item])),
+    [[]]
+  );
+}
+
+/**
+ * Strip reserved intersection-key tokens from a free-text answer so it can
+ * safely be used as a Firestore document-field name.
+ */
+function sanitizeKeyPart(s: string): string {
+  return s.replace(/&&/g, "").replace(/\|\|/g, "").replace(/\|/g, "").trim();
+}
+
+/**
+ * Build the combination key for one intersection given the submitted answers.
+ * Returns null when an AND constraint is violated (missing required answer).
+ */
+function buildCombinationKey(
+  intersection: Intersection,
+  submittedAnswers: Map<string, string>
+): string | null {
+  const values = intersection.questionTitles.map(
+    (qt) => sanitizeKeyPart(submittedAnswers.get(qt) ?? "")
+  );
+
+  // Validate AND constraints
+  for (let i = 0; i < intersection.operators.length; i++) {
+    if (
+      intersection.operators[i] === "and" &&
+      (values[i] === "" || values[i + 1] === "")
+    ) {
+      return null;
+    }
+  }
+
+  // At least one non-empty answer required
+  if (values.every((v) => v === "")) return null;
+
+  let key = values[0];
+  for (let i = 1; i < values.length; i++) {
+    const sep = intersection.operators[i - 1] === "or" ? "||" : "&&";
+    key += sep + values[i];
+  }
+  return key;
+}
+
+// ---------------------------------------------------------------------------
+// Survey class
+// ---------------------------------------------------------------------------
 
 export default class Survey implements Loadable {
   static fireCollection = "surveys";
@@ -136,7 +201,12 @@ export default class Survey implements Loadable {
       this.intersections = intersectionsSnap.docs.map((d) => {
         const counts: Record<string, number> = {};
         for (const [key, val] of Object.entries(d.data())) {
-          if (!["label", "questionTitles", "operator"].includes(key) && typeof val === "number") {
+          if (
+            !["label", "questionTitles", "operators", "operator"].includes(
+              key
+            ) &&
+            typeof val === "number"
+          ) {
             counts[key] = val;
           }
         }
@@ -144,7 +214,7 @@ export default class Survey implements Loadable {
           id: d.id,
           label: d.data().label ?? "",
           questionTitles: d.data().questionTitles ?? [],
-          operator: d.data().operator,
+          operators: d.data().operators ?? [],
           counts,
         };
       });
@@ -162,14 +232,31 @@ export default class Survey implements Loadable {
     return participantsSnap.docs.map((doc) => doc.id);
   }
 
-  /** Publish the survey: set ACTIVE, record participant count + timestamp, initialise intersection docs. */
+  /**
+   * Publish the survey.
+   * - Sets status ACTIVE, records timestamps and participant count.
+   * - Pre-populates all discrete combination keys in each intersection at count 0,
+   *   so participants only ever INCREMENT existing docs (no creates needed at submit time).
+   *   Intersections containing TEXT or DATE questions are skipped (unbounded answer space).
+   */
   async start() {
     const surveyRef = this.ref ?? doc(db, "surveys", this.id!);
 
-    const [participantsSnap, intersectionsSnap] = await Promise.all([
-      getDocs(collection(surveyRef, "participants")),
-      getDocs(collection(surveyRef, "intersections")),
-    ]);
+    const [participantsSnap, intersectionsSnap, questionsSnap] =
+      await Promise.all([
+        getDocs(collection(surveyRef, "participants")),
+        getDocs(collection(surveyRef, "intersections")),
+        getDocs(collection(surveyRef, "questions")),
+      ]);
+
+    // Load answers for each question (needed for combination key pre-population)
+    const questionsWithAnswers = await Promise.all(
+      questionsSnap.docs.map(async (qDoc) => {
+        const q = new Question(qDoc);
+        await q.load();
+        return q;
+      })
+    );
 
     const totalParticipants = participantsSnap.size;
     const storedIntersections: Intersection[] = intersectionsSnap.docs.map(
@@ -177,10 +264,12 @@ export default class Survey implements Loadable {
         id: d.id,
         label: d.data().label ?? "",
         questionTitles: d.data().questionTitles ?? [],
+        operators: d.data().operators ?? [],
       })
     );
 
     const batch = writeBatch(db);
+    let batchWrites = 0;
 
     batch.update(surveyRef, {
       status: SurveyStatus.ACTIVE,
@@ -188,21 +277,66 @@ export default class Survey implements Loadable {
       totalParticipants,
       responseCount: 0,
     });
+    batchWrites++;
 
-    // Confirm intersection docs exist so submit() can find them
     for (const intersection of storedIntersections) {
       const interRef = doc(
         collection(surveyRef, "intersections"),
         intersection.id!
       );
+
+      // Confirm intersection metadata
       batch.set(
         interRef,
         {
           label: intersection.label,
           questionTitles: intersection.questionTitles,
+          operators: intersection.operators,
         },
         { merge: true }
       );
+      batchWrites++;
+
+      // Pre-calculate combination keys for fully-discrete intersections
+      const answerSets: string[][] = [];
+      let hasUnboundedType = false;
+
+      for (const qt of intersection.questionTitles) {
+        const q = questionsWithAnswers.find((q) => q.title === qt);
+        if (
+          !q ||
+          q.type === QuestionType.TEXT ||
+          q.type === QuestionType.DATE
+        ) {
+          hasUnboundedType = true;
+          break;
+        }
+        const answers = q.answers.map((a) => a.title).filter((t) => t.trim());
+        if (answers.length === 0) {
+          hasUnboundedType = true;
+          break;
+        }
+        answerSets.push(answers);
+      }
+
+      if (!hasUnboundedType && answerSets.length >= 2) {
+        const combinations = cartesianProduct(answerSets);
+        // Guard against exceeding Firestore batch limit (500 ops total)
+        if (combinations.length <= 400 - batchWrites) {
+          for (const combo of combinations) {
+            let key = combo[0];
+            for (let i = 1; i < combo.length; i++) {
+              const sep =
+                (intersection.operators[i - 1] ?? "and") === "or"
+                  ? "||"
+                  : "&&";
+              key += sep + combo[i];
+            }
+            batch.set(interRef, { [key]: 0 }, { merge: true });
+            batchWrites++;
+          }
+        }
+      }
     }
 
     await batch.commit();
@@ -212,17 +346,16 @@ export default class Survey implements Loadable {
 
   /**
    * Close the survey:
-   * 1. Set answer counts 1–2 to -1 (privacy: fewer than 3 responses hidden)
-   * 2. Same for intersection combination counts
-   * 3. Delete all participants from both subcollections
-   * 4. Mark survey CLOSED
+   * 1. Set answer counts 1–2 to -1 (privacy: fewer than 3 responses hidden).
+   * 2. Same for intersection combination counts.
+   * 3. Delete all participants from both subcollections.
+   * 4. Mark survey CLOSED.
    */
   async finish() {
     if (!this.ref) throw new Error("No ref found");
 
     const batch = writeBatch(db);
 
-    // Apply 3-response rule to answers
     for (const question of this.questions ?? []) {
       if (!question.ref) continue;
       const answersSnap = await getDocs(collection(question.ref, "answers"));
@@ -234,7 +367,6 @@ export default class Survey implements Loadable {
       }
     }
 
-    // Apply 3-response rule to intersection combinations
     const intersectionsSnap = await getDocs(
       collection(this.ref, "intersections")
     );
@@ -242,7 +374,10 @@ export default class Survey implements Loadable {
       const data = interDoc.data();
       const updates: Record<string, number> = {};
       for (const [key, val] of Object.entries(data)) {
-        if (["label", "questionTitles", "operator"].includes(key)) continue;
+        if (
+          ["label", "questionTitles", "operators", "operator"].includes(key)
+        )
+          continue;
         if (typeof val === "number" && val > 0 && val < 3) {
           updates[key] = -1;
         }
@@ -252,7 +387,6 @@ export default class Survey implements Loadable {
       }
     }
 
-    // Delete all participant entries from both subcollections
     const participantsSnap = await getDocs(
       collection(this.ref, "participants")
     );
@@ -283,7 +417,6 @@ export default class Survey implements Loadable {
     return [...setA].filter((x) => !setB.has(x));
   };
 
-  /** Add new participants to an ACTIVE survey without touching other state. */
   async addParticipants(emails: string[]) {
     if (!this.ref) throw new Error("No ref found");
     const participantsCollectionRef = collection(this.ref, "participants");
@@ -296,7 +429,10 @@ export default class Survey implements Loadable {
         if (existing.exists() && existing.data().status) continue;
         transaction.set(participantRef, { status: "added" });
         transaction.set(
-          doc(collection(doc(participantsCollection, email), "surveys"), this.id!),
+          doc(
+            collection(doc(participantsCollection, email), "surveys"),
+            this.id!
+          ),
           {}
         );
       }
@@ -331,7 +467,6 @@ export default class Survey implements Loadable {
       const questionsCollectionRef = collection(surveyRef, "questions");
       const participants = await this.participantsList();
 
-      // Read existing intersection IDs before the transaction
       const intersectionsRef = collection(surveyRef, "intersections");
       const existingIntersectionsSnap = await getDocs(intersectionsRef);
       const existingIntersectionIds = new Set(
@@ -369,7 +504,10 @@ export default class Survey implements Loadable {
               transaction.set(participantRef, { status: "added" });
               transaction.set(
                 doc(
-                  collection(doc(participantsCollection, participant), "surveys"),
+                  collection(
+                    doc(participantsCollection, participant),
+                    "surveys"
+                  ),
                   surveyRef.id
                 ),
                 {}
@@ -385,7 +523,10 @@ export default class Survey implements Loadable {
             );
             transaction.delete(
               doc(
-                collection(doc(participantsCollection, participant), "surveys"),
+                collection(
+                  doc(participantsCollection, participant),
+                  "surveys"
+                ),
                 surveyRef.id
               )
             );
@@ -452,7 +593,6 @@ export default class Survey implements Loadable {
                   });
                 }
               }
-              // Pre-populate numeric range answers
               if (question.isNumeric && question.hasNumericLimits) {
                 for (
                   let i = question.numericMin!;
@@ -482,6 +622,7 @@ export default class Survey implements Loadable {
             transaction.set(interRef, {
               label: intersection.label,
               questionTitles: intersection.questionTitles,
+              operators: intersection.operators,
             });
             if (!intersection.id) intersection.id = interRef.id;
           }
@@ -517,7 +658,6 @@ export default class Survey implements Loadable {
 
     const answersToProcess: AnswerToProcess[] = [];
     const multiAnswers: { question: Question; answerIds: string[] }[] = [];
-    // Used for intersection key computation
     const submittedAnswers = new Map<string, string>();
 
     for (const question of this.questions ?? []) {
@@ -532,7 +672,8 @@ export default class Survey implements Loadable {
       } else if (question.type === QuestionType.TEXT) {
         const raw = form.get(question.title!)?.toString();
         if (!raw) continue;
-        const answerId = question.normalizeAnswer(raw);
+        // Normalise and strip intersection-key tokens
+        const answerId = sanitizeKeyPart(question.normalizeAnswer(raw));
         if (!answerId) continue;
         submittedAnswers.set(question.title!, answerId);
         answersToProcess.push({ question, answerId, needsCreation: true });
@@ -583,7 +724,6 @@ export default class Survey implements Loadable {
     }
 
     await runTransaction(db, async (transaction) => {
-      // Single-value answers
       for (const {
         question,
         answerId,
@@ -609,7 +749,6 @@ export default class Survey implements Loadable {
         }
       }
 
-      // Multi-choice answers
       for (const { question, answerIds } of multiAnswers) {
         if (!question.ref) continue;
         for (const answerId of answerIds) {
@@ -632,23 +771,15 @@ export default class Survey implements Loadable {
         }
       }
 
-      // Intersections — increment combination key counts
+      // Intersection combination counts
       for (const intersection of this.intersections ?? []) {
         if (!intersection.id || intersection.questionTitles.length < 2)
           continue;
-        const answerValues: string[] = [];
-        let skip = false;
-        for (const qt of intersection.questionTitles) {
-          const val = submittedAnswers.get(qt);
-          // Skip if question was not answered or answer contains the delimiter
-          if (!val || val.includes("|")) {
-            skip = true;
-            break;
-          }
-          answerValues.push(val);
-        }
-        if (skip) continue;
-        const combinationKey = answerValues.join("|");
+        const combinationKey = buildCombinationKey(
+          intersection,
+          submittedAnswers
+        );
+        if (!combinationKey) continue;
         transaction.set(
           doc(collection(this.ref!, "intersections"), intersection.id),
           { [combinationKey]: increment(1) },
@@ -657,16 +788,13 @@ export default class Survey implements Loadable {
       }
 
       // Remove participant from participants/{email}/surveys/{id}
-      transaction.delete(
-        doc(db, "participants", userEmail, "surveys", id!)
-      );
+      transaction.delete(doc(db, "participants", userEmail, "surveys", id!));
 
-      // Remove participant from surveys/{id}/participants/{email}  (Bug 4 fix)
+      // Remove participant from surveys/{id}/participants/{email}
       transaction.delete(
         doc(collection(this.ref!, "participants"), userEmail)
       );
 
-      // Track response count
       transaction.update(this.ref!, { responseCount: increment(1) });
     });
   }
@@ -702,13 +830,23 @@ export default class Survey implements Loadable {
   deletingQuestion(question: Question) {
     const copy = this.copy;
     copy.deleteQuestion(question);
-    // Also remove the question from any intersection that referenced it
-    copy.intersections = copy.intersections.map((intersection) => ({
-      ...intersection,
-      questionTitles: intersection.questionTitles.filter(
+    // Remove question from each intersection and trim the matching operator
+    copy.intersections = copy.intersections.map((intersection) => {
+      const removeIdx = intersection.questionTitles.indexOf(
+        question.title ?? ""
+      );
+      if (removeIdx === -1) return intersection;
+
+      const newTitles = intersection.questionTitles.filter(
         (t) => t !== question.title
-      ),
-    }));
+      );
+      const newOps = [...intersection.operators];
+      // Remove the operator to the left (or right for the first element)
+      const opIdx = Math.min(removeIdx, newOps.length - 1);
+      if (newOps.length > 0) newOps.splice(opIdx, 1);
+
+      return { ...intersection, questionTitles: newTitles, operators: newOps };
+    });
     return copy;
   }
 
@@ -736,7 +874,6 @@ export default class Survey implements Loadable {
     await updateDoc(ref, { status });
   }
 
-  /** Create an in-memory PENDING copy of a closed survey (all counts reset to 0). */
   static createCopy(of: Survey, ownerEmail: string): Survey {
     const newSurvey = new Survey(undefined, ownerEmail);
     newSurvey.title = (of.title ?? "") + " (copy)";
@@ -775,6 +912,7 @@ export default class Survey implements Loadable {
       of.intersections?.map((i) => ({
         label: i.label,
         questionTitles: [...i.questionTitles],
+        operators: [...(i.operators ?? [])],
       })) ?? [];
     newSurvey.participants = [];
     return newSurvey;
