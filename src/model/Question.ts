@@ -36,6 +36,9 @@ export enum QuestionPrefilled {
 export default class Question implements Loadable {
   static fireCollection = "questions";
 
+  /** Stable in-memory id — preserved through copies so React keys never change while editing. */
+  instanceId: string = Math.random().toString(36).slice(2, 11);
+
   title?: string;
   _title?: string;
   description?: string;
@@ -184,6 +187,7 @@ export default class Question implements Loadable {
 
   get copy() {
     const copy = new Question();
+    copy.instanceId = this.instanceId; // stable across copies
     copy.title = this.title;
     copy._title = this._title;
     copy.description = this.description;
