@@ -11,6 +11,7 @@ import Answer from "./Answer";
 
 export enum QuestionType {
   SINGLE_CHOICE = "single-choice",
+  NUMERIC = "numeric",
 }
 
 export enum QuestionPrefilled {
@@ -18,6 +19,7 @@ export enum QuestionPrefilled {
   RELIGION = "religion",
   COUNTRY = "country",
   SEXUAL_ORIENTATION = "sexual orientation",
+  NUMERIC = "numeric",
 }
 
 export default class Question implements Loadable {
@@ -27,6 +29,12 @@ export default class Question implements Loadable {
   _title?: string;
   description?: string;
   orderIndex: number = 0;
+  type: QuestionType = QuestionType.SINGLE_CHOICE;
+
+  numericPrefix?: string;
+  numericSuffix?: string;
+  numericMin?: number;
+  numericMax?: number;
 
   answers: Answer[] = [];
   answersToDelete: Answer[] = [];
@@ -38,6 +46,11 @@ export default class Question implements Loadable {
     this._title = question?.id;
     this.description = question?.data().description ?? "";
     this.orderIndex = question?.data().orderIndex ?? 0;
+    this.type = question?.data().type ?? QuestionType.SINGLE_CHOICE;
+    this.numericPrefix = question?.data().numericPrefix ?? "";
+    this.numericSuffix = question?.data().numericSuffix ?? "";
+    this.numericMin = question?.data().numericMin;
+    this.numericMax = question?.data().numericMax;
     this.ref = question?.ref;
     this.answers =
       question
@@ -107,6 +120,11 @@ export default class Question implements Loadable {
     copy._title = this._title;
     copy.description = this.description;
     copy.orderIndex = this.orderIndex;
+    copy.type = this.type;
+    copy.numericPrefix = this.numericPrefix;
+    copy.numericSuffix = this.numericSuffix;
+    copy.numericMin = this.numericMin;
+    copy.numericMax = this.numericMax;
     copy.answers = this.answers;
     copy.answersToDelete = this.answersToDelete;
     copy.ref = this.ref;
@@ -126,6 +144,11 @@ export default class Question implements Loadable {
         answers: this.answers?.map((answer) => answer.title),
         description: this.description,
         orderIndex: this.orderIndex,
+        type: this.type,
+        numericPrefix: this.numericPrefix,
+        numericSuffix: this.numericSuffix,
+        numericMin: this.numericMin,
+        numericMax: this.numericMax,
       },
     };
   }
@@ -148,5 +171,13 @@ export default class Question implements Loadable {
     copy.answers?.splice(index!, 1, newAnswer);
 
     return copy;
+  }
+
+  get isNumeric() {
+    return this.type === QuestionType.NUMERIC;
+  }
+
+  get hasNumericLimits() {
+    return this.numericMin !== undefined && this.numericMax !== undefined;
   }
 }

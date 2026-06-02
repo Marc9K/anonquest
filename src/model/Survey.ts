@@ -286,6 +286,26 @@ export default class Survey implements Loadable {
                   });
                 }
               }
+
+              // For numeric questions with both min and max set, pre-populate all possible answers
+              if (
+                question.isNumeric &&
+                question.numericMin !== undefined &&
+                question.numericMax !== undefined
+              ) {
+                for (
+                  let i = question.numericMin;
+                  i <= question.numericMax;
+                  i++
+                ) {
+                  const answerRef = doc(answersCollectionRef, i.toString());
+                  transaction.set(answerRef, {
+                    count: 0,
+                    orderIndex: i - question.numericMin,
+                    numericValue: i,
+                  });
+                }
+              }
             }
           }
         } catch (e) {
@@ -317,17 +337,107 @@ export default class Survey implements Loadable {
   async submit(form: FormData, userEmail: string) {
     if (!this.ref) return;
     const id = this.id;
-    await runTransaction(db, async (transaction) => {
-      this.questions?.map(async (question) => {
-        const answerId = form.get(question.title!)?.toString();
-        if (!answerId || !question.ref) return;
-        const answerRef = doc(question.ref, "answers", answerId);
-        transaction.update(answerRef, {
-          count: increment(1),
+
+    // First, check which answers need to be created vs updated
+    interface AnswerToProcess {
+      question: Question;
+      answerId: string;
+      numericValue?: number;
+      needsCreation: boolean;
+    }
+
+    const answersToProcess: AnswerToProcess[] = [];
+
+    for (const question of this.questions ?? []) {
+      const answerId = form.get(question.title!)?.toString();
+      if (!answerId || !question.ref) continue;
+
+      if (question.isNumeric) {
+        // Handle numeric answers
+        const numericValue = Number(answerId);
+        if (isNaN(numericValue)) continue;
+
+        // Check if min/max constraints are satisfied
+        if (
+          question.numericMin !== undefined &&
+          numericValue < question.numericMin
+        )
+          continue;
+        if (
+          question.numericMax !== undefined &&
+          numericValue > question.numericMax
+        )
+          continue;
+
+        // Check if this numeric value exists in the question's answers array
+        const existingAnswer = question.answers.find(
+          (answer) => answer.numericValue === numericValue
+        );
+
+        answersToProcess.push({
+          question,
+          answerId: answerId,
+          numericValue,
+          needsCreation: !existingAnswer,
         });
-      });
+      } else {
+        // Handle regular single choice answers
+        // Check if this answer exists in the question's answers array
+        const existingAnswer = question.answers.find(
+          (answer) => answer.title === answerId
+        );
+
+        answersToProcess.push({
+          question,
+          answerId: answerId,
+          numericValue: undefined,
+          needsCreation: !existingAnswer,
+        });
+      }
+    }
+
+    await runTransaction(db, async (transaction) => {
+      // Process all answers that need creation or updates
+      for (const {
+        question,
+        answerId,
+        numericValue,
+        needsCreation,
+      } of answersToProcess) {
+        if (!question.ref) continue;
+
+        if (needsCreation) {
+          // Check if the answer document exists in Firestore (in case it was created by another user)
+          const answersRef = collection(question.ref, "answers");
+          const answerRef = doc(answersRef, answerId);
+          const answerDoc = await transaction.get(answerRef);
+
+          if (answerDoc.exists()) {
+            // Answer exists, increment it
+            transaction.update(answerRef, {
+              count: increment(1),
+            });
+          } else {
+            // Answer doesn't exist, create it
+            const existingAnswersCount = question.answers.length;
+            transaction.set(answerRef, {
+              count: 1,
+              orderIndex: existingAnswersCount,
+              ...(numericValue !== undefined && { numericValue }),
+            });
+          }
+        } else {
+          // Answer exists in the question's answers array, just increment it
+          const answersRef = collection(question.ref, "answers");
+          const answerRef = doc(answersRef, answerId);
+          transaction.update(answerRef, {
+            count: increment(1),
+          });
+        }
+      }
+
+      // Remove participant from survey
       const participantsCollection = collection(db, "participants");
-      doc(db, "participants", userEmail);
       const participantDocRef = doc(participantsCollection, userEmail);
       const surveysSubcollectionRef = collection(participantDocRef, "surveys");
       const surveyDocRef = doc(surveysSubcollectionRef, id);

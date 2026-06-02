@@ -12,6 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
+import NumericQuestionConfig from "./NumericQuestionConfig";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
 import Question from "@/model/Question";
@@ -133,80 +134,91 @@ export default function CreateQuestionCard({
                       }}
                     />
                   </Card.Description>
-                  <Field.Root required>
-                    <Field.Label>Answer options</Field.Label>
-                  </Field.Root>
-                  <Stack onMouseDown={(e) => e.stopPropagation()}>
-                    {alwaysVisibleAnswers.map((answer, index) => (
-                      <AnswerCard
-                        key={index}
-                        option={answer}
-                        setOption={(option) => {
-                          if (!option) {
-                            const updatedQuestion = question.deleting(answer);
-                            setQuestion(updatedQuestion);
-                            return;
-                          }
-                          option.orderIndex = index;
-                          const updatedQuestion = question.replacing(
-                            answer,
-                            option
-                          );
-                          setQuestion(updatedQuestion);
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                  {collapsibleAnswers.length > 0 && (
+
+                  {question.isNumeric && (
+                    <NumericQuestionConfig
+                      question={question}
+                      onChange={setQuestion}
+                    />
+                  )}
+
+                  {!question.isNumeric && (
                     <>
-                      {!showMore && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowMore(true)}
-                        >
-                          ...
-                        </Button>
+                      <Field.Root required>
+                        <Field.Label>Answer options</Field.Label>
+                      </Field.Root>
+                      <Stack onMouseDown={(e) => e.stopPropagation()}>
+                        {alwaysVisibleAnswers.map((answer, index) => (
+                          <AnswerCard
+                            key={index}
+                            option={answer}
+                            setOption={(option) => {
+                              if (!option) {
+                                const updatedQuestion =
+                                  question.deleting(answer);
+                                setQuestion(updatedQuestion);
+                                return;
+                              }
+                              option.orderIndex = index;
+                              const updatedQuestion = question.replacing(
+                                answer,
+                                option
+                              );
+                              setQuestion(updatedQuestion);
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                      {collapsibleAnswers.length > 0 && (
+                        <>
+                          {!showMore && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowMore(true)}
+                            >
+                              ...
+                            </Button>
+                          )}
+                          <Collapsible.Root open={showMore} paddingTop="8px">
+                            <Collapsible.Content>
+                              <Stack onMouseDown={(e) => e.stopPropagation()}>
+                                {collapsibleAnswers.map((answer, i) => (
+                                  <AnswerCard
+                                    key={i + 3}
+                                    option={answer}
+                                    setOption={(option) => {
+                                      if (!option) {
+                                        const updatedQuestion =
+                                          question.deleting(answer);
+                                        setQuestion(updatedQuestion);
+                                        return;
+                                      }
+                                      option.orderIndex = i + 3;
+                                      const updatedQuestion =
+                                        question.replacing(answer, option);
+                                      setQuestion(updatedQuestion);
+                                    }}
+                                  />
+                                ))}
+                              </Stack>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowMore(false)}
+                              >
+                                Show less
+                              </Button>
+                            </Collapsible.Content>
+                          </Collapsible.Root>
+                        </>
                       )}
-                      <Collapsible.Root open={showMore} paddingTop="8px">
-                        <Collapsible.Content>
-                          <Stack onMouseDown={(e) => e.stopPropagation()}>
-                            {collapsibleAnswers.map((answer, i) => (
-                              <AnswerCard
-                                key={i + 3}
-                                option={answer}
-                                setOption={(option) => {
-                                  if (!option) {
-                                    const updatedQuestion =
-                                      question.deleting(answer);
-                                    setQuestion(updatedQuestion);
-                                    return;
-                                  }
-                                  option.orderIndex = i + 3;
-                                  const updatedQuestion = question.replacing(
-                                    answer,
-                                    option
-                                  );
-                                  setQuestion(updatedQuestion);
-                                }}
-                              />
-                            ))}
-                          </Stack>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowMore(false)}
-                          >
-                            Show less
-                          </Button>
-                        </Collapsible.Content>
-                      </Collapsible.Root>
                     </>
                   )}
                 </>
               )}
             </Card.Body>
-            {!isDragging && (
+            {!isDragging && !question.isNumeric && (
               <Card.Footer justifyContent="flex-end">
                 <IconButton
                   aria-label="Add an option"
