@@ -91,6 +91,7 @@ export default function Account() {
         <Tabs.Content value="participant">
           <OptionalGrid
             title="Take part in Surveys:"
+            userEmail={user?.email ?? undefined}
             data={
               { docs: participantSurveys } as QuerySnapshot<
                 DocumentData,
@@ -100,7 +101,12 @@ export default function Account() {
           />
         </Tabs.Content>
         <Tabs.Content value="research">
-          <OptionalGrid title="Manage Surveys:" isAdmin data={snapshotOwned} />
+          <OptionalGrid
+            title="Manage Surveys:"
+            isAdmin
+            userEmail={user?.email ?? undefined}
+            data={snapshotOwned}
+          />
           <Button
             onClick={async () => {
               router.push("/survey");

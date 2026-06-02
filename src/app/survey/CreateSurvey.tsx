@@ -4,17 +4,23 @@ import { useRef, useState } from "react";
 import {
   Button,
   ButtonGroup,
+  Card,
+  Checkbox,
+  Field,
   Fieldset,
   HStack,
   IconButton,
   Menu,
   Portal,
+  Stack,
+  Text,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import CreateQuestionCard from "./CreateQuestionCard";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
 import Survey from "@/model/Survey";
+import { Intersection } from "@/model/Survey";
 import { auth } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -25,242 +31,11 @@ import {
 import { restrictToVerticalAxis, snapCenterToCursor } from "@dnd-kit/modifiers";
 import { useConstrainedSensors } from "./useConstrainedSensors";
 import { LuChevronDown } from "react-icons/lu";
+import { FiDelete } from "react-icons/fi";
 import { Tooltip } from "@/components/ui/tooltip";
 import { QuestionPrefilled } from "@/model/Question";
 import Answer from "@/model/Answer";
-
-const getPrefilledOptions = (questionType: QuestionPrefilled): string[] => {
-  switch (questionType) {
-    case QuestionPrefilled.ETHNICITY:
-      return [
-        "Asian or Asian British",
-        "Black, Black British, Caribbean or African",
-        "Mixed or multiple ethnic groups",
-        "White",
-        "Other",
-      ];
-    case QuestionPrefilled.RELIGION:
-      return [
-        "Christian",
-        "Muslim",
-        "Hindu",
-        "Buddhist",
-        "Jewish",
-        "Sikh",
-        "None",
-        "Other",
-      ];
-    case QuestionPrefilled.COUNTRY:
-      return [
-        "Afghanistan",
-        "Albania",
-        "Algeria",
-        "Andorra",
-        "Angola",
-        "Antigua and Barbuda",
-        "Argentina",
-        "Armenia",
-        "Australia",
-        "Austria",
-        "Azerbaijan",
-        "Bahamas (The)",
-        "Bahrain",
-        "Bangladesh",
-        "Barbados",
-        "Belarus",
-        "Belgium",
-        "Belize",
-        "Benin",
-        "Bhutan",
-        "Bolivia (Plurinational State of)",
-        "Bosnia and Herzegovina",
-        "Botswana",
-        "Brazil",
-        "Brunei Darussalam",
-        "Bulgaria",
-        "Burkina Faso",
-        "Burundi",
-        "Cabo Verde",
-        "Cambodia",
-        "Cameroon",
-        "Canada",
-        "Central African Republic",
-        "Chad",
-        "Chile",
-        "China",
-        "Colombia",
-        "Comoros",
-        "Congo",
-        "Costa Rica",
-        "Côte D'Ivoire",
-        "Croatia",
-        "Cuba",
-        "Cyprus",
-        "Czechia",
-        "Democratic People's Republic of Korea",
-        "Democratic Republic of the Congo",
-        "Denmark",
-        "Djibouti",
-        "Dominica",
-        "Dominican Republic",
-        "Ecuador",
-        "Egypt",
-        "El Salvador",
-        "Equatorial Guinea",
-        "Eritrea",
-        "Estonia",
-        "Eswatini",
-        "Ethiopia",
-        "Fiji",
-        "Finland",
-        "France",
-        "Gabon",
-        "Gambia (Republic of The)",
-        "Georgia",
-        "Germany",
-        "Ghana",
-        "Greece",
-        "Grenada",
-        "Guatemala",
-        "Guinea",
-        "Guinea Bissau",
-        "Guyana",
-        "Haiti",
-        "Honduras",
-        "Hungary",
-        "Iceland",
-        "India",
-        "Indonesia",
-        "Iran (Islamic Republic of)",
-        "Iraq",
-        "Ireland",
-        "Israel",
-        "Italy",
-        "Jamaica",
-        "Japan",
-        "Jordan",
-        "Kazakhstan",
-        "Kenya",
-        "Kiribati",
-        "Kuwait",
-        "Kyrgyzstan",
-        "Lao People’s Democratic Republic",
-        "Latvia",
-        "Lebanon",
-        "Lesotho",
-        "Liberia",
-        "Libya",
-        "Liechtenstein",
-        "Lithuania",
-        "Luxembourg",
-        "Madagascar",
-        "Malawi",
-        "Malaysia",
-        "Maldives",
-        "Mali",
-        "Malta",
-        "Marshall Islands",
-        "Mauritania",
-        "Mauritius",
-        "Mexico",
-        "Micronesia (Federated States of)",
-        "Monaco",
-        "Mongolia",
-        "Montenegro",
-        "Morocco",
-        "Mozambique",
-        "Myanmar",
-        "Namibia",
-        "Nauru",
-        "Nepal",
-        "Netherlands (Kingdom of the)",
-        "New Zealand",
-        "Nicaragua",
-        "Niger",
-        "Nigeria",
-        "North Macedonia",
-        "Norway",
-        "Oman",
-        "Pakistan",
-        "Palau",
-        "Panama",
-        "Papua New Guinea",
-        "Paraguay",
-        "Peru",
-        "Philippines",
-        "Poland",
-        "Portugal",
-        "Qatar",
-        "Republic of Korea",
-        "Republic of Moldova",
-        "Romania",
-        "Russian Federation",
-        "Rwanda",
-        "Saint Kitts and Nevis",
-        "Saint Lucia",
-        "Saint Vincent and the Grenadines",
-        "Samoa",
-        "San Marino",
-        "Sao Tome and Principe",
-        "Saudi Arabia",
-        "Senegal",
-        "Serbia",
-        "Seychelles",
-        "Sierra Leone",
-        "Singapore",
-        "Slovakia",
-        "Slovenia",
-        "Solomon Islands",
-        "Somalia",
-        "South Africa",
-        "South Sudan",
-        "Spain",
-        "Sri Lanka",
-        "Sudan",
-        "Suriname",
-        "Sweden",
-        "Switzerland",
-        "Syrian Arab Republic",
-        "Tajikistan",
-        "Thailand",
-        "Timor-Leste",
-        "Togo",
-        "Tonga",
-        "Trinidad and Tobago",
-        "Tunisia",
-        "Türkiye",
-        "Turkmenistan",
-        "Tuvalu",
-        "Uganda",
-        "Ukraine",
-        "United Arab Emirates",
-        "United Kingdom of Great Britain and Northern Ireland",
-        "United Republic of Tanzania",
-        "United States of America",
-        "Uruguay",
-        "Uzbekistan",
-        "Vanuatu",
-        "Venezuela, Bolivarian Republic of",
-        "Viet Nam",
-        "Yemen",
-        "Zambia",
-        "Zimbabwe",
-      ];
-
-    case QuestionPrefilled.SEXUAL_ORIENTATION:
-      return [
-        "Heterosexual",
-        "Homosexual",
-        "Bisexual",
-        "Pansexual",
-        "Asexual",
-        "Queer",
-        "Other",
-      ];
-    default:
-      return [];
-  }
-};
+import { getPrefilledOptions } from "@/constants/prefilledOptions";
 
 export default function CreateSurvey({ existing }: { existing?: Survey }) {
   const [user] = useAuthState(auth);
@@ -303,10 +78,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
         const newQuestions = [...(prev.questions ?? [])];
         const [movedQuestion] = newQuestions.splice(oldIndex, 1);
         newQuestions.splice(newIndex, 0, movedQuestion);
-
-        newQuestions.forEach((q, index) => {
-          q.orderIndex = index;
-        });
+        newQuestions.forEach((q, idx) => { q.orderIndex = idx; });
 
         const newSurvey = prev.copy;
         newSurvey.questions = newQuestions;
@@ -327,7 +99,6 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
 
   const addPrefilledQuestion = (questionType: QuestionPrefilled) => {
     const prefilledAnswers = getPrefilledOptions(questionType);
-
     setSurvey((prev) => {
       if (prev.questions?.some((q) => q.title === "..." + questionType))
         return prev;
@@ -335,17 +106,44 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
       if (!newSurvey.questions) return newSurvey;
       const lastIndex = newSurvey.questions.length - 1;
       const newQuestion = newSurvey.questions[lastIndex];
-
       newQuestion.title = "..." + questionType;
       newQuestion.orderIndex = lastIndex;
-      newQuestion.answers = prefilledAnswers.map((answer, index) => {
-        const answerObj = new Answer();
-        answerObj.title = answer;
-        answerObj.orderIndex = index;
-        return answerObj;
+      newQuestion.answers = prefilledAnswers.map((answer, idx) => {
+        const a = new Answer();
+        a.title = answer;
+        a.orderIndex = idx;
+        return a;
       });
-
       return newSurvey;
+    });
+  };
+
+  const addIntersection = () => {
+    setSurvey((prev) => {
+      const c = prev.copy;
+      c.intersections = [
+        ...c.intersections,
+        { label: "", questionTitles: [] } as Intersection,
+      ];
+      return c;
+    });
+  };
+
+  const updateIntersection = (idx: number, patch: Partial<Intersection>) => {
+    setSurvey((prev) => {
+      const c = prev.copy;
+      c.intersections = c.intersections.map((inter, i) =>
+        i === idx ? { ...inter, ...patch } : inter
+      );
+      return c;
+    });
+  };
+
+  const removeIntersection = (idx: number) => {
+    setSurvey((prev) => {
+      const c = prev.copy;
+      c.intersections = c.intersections.filter((_, i) => i !== idx);
+      return c;
     });
   };
 
@@ -379,6 +177,8 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
               label="Participants' emails"
               helper="Please provide comma separated emails"
             />
+
+            {/* Questions */}
             <DndContext
               onDragStart={() => setIsDragging(true)}
               onDragEnd={handleDragEnd}
@@ -409,6 +209,7 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 ))}
               </SortableContext>
             </DndContext>
+
             <Tooltip
               content={
                 survey.hasVacantQuestion
@@ -423,7 +224,6 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 >
                   + Add a question
                 </Button>
-
                 <Menu.Root
                   onSelect={({ value }) => {
                     if (value && (value as QuestionPrefilled)) {
@@ -456,7 +256,81 @@ export default function CreateSurvey({ existing }: { existing?: Survey }) {
                 </Menu.Root>
               </ButtonGroup>
             </Tooltip>
+
+            {/* Intersections */}
+            <Field.Root>
+              <Field.Label>Intersections</Field.Label>
+            </Field.Root>
+            <Stack gap={3}>
+              {survey.intersections.map((intersection, idx) => {
+                const isInvalid = intersection.questionTitles.length < 2;
+                return (
+                  <Card.Root
+                    key={intersection.id ?? idx}
+                    variant="outline"
+                    borderColor={isInvalid ? "red.300" : undefined}
+                  >
+                    <Card.Body>
+                      <HStack marginBottom={2}>
+                        <FieldInput
+                          name={`intersection-label-${idx}`}
+                          placeholder="Intersection label"
+                          value={intersection.label}
+                          onChange={(e) =>
+                            updateIntersection(idx, {
+                              label: e.target.value,
+                            })
+                          }
+                        />
+                        <IconButton
+                          aria-label="Remove intersection"
+                          colorPalette="red"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeIntersection(idx)}
+                        >
+                          <FiDelete />
+                        </IconButton>
+                      </HStack>
+                      <Stack direction="row" wrap="wrap" gap={2}>
+                        {survey.questions
+                          ?.filter((q) => q.title)
+                          .map((q) => (
+                            <Checkbox.Root
+                              key={q.title}
+                              checked={intersection.questionTitles.includes(q.title!)}
+                              onCheckedChange={(details: { checked: boolean | "indeterminate" }) => {
+                                const on = details.checked === true;
+                                const newTitles = on
+                                  ? [...intersection.questionTitles, q.title!]
+                                  : intersection.questionTitles.filter((t) => t !== q.title);
+                                updateIntersection(idx, { questionTitles: newTitles });
+                              }}
+                            >
+                              <Checkbox.Control />
+                              <Checkbox.Label>{q.title}</Checkbox.Label>
+                            </Checkbox.Root>
+                          ))}
+                      </Stack>
+                      {isInvalid && (
+                        <Text color="red.500" fontSize="sm" marginTop={1}>
+                          Select at least 2 questions
+                        </Text>
+                      )}
+                    </Card.Body>
+                  </Card.Root>
+                );
+              })}
+              <Button
+                variant="outline"
+                alignSelf="flex-start"
+                onClick={addIntersection}
+              >
+                + Add intersection
+              </Button>
+            </Stack>
           </Fieldset.Content>
+
           <HStack justify="space-between">
             {!survey.isLocal && (
               <Button
