@@ -3,6 +3,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import CreateSurvey from "../CreateSurvey";
 import AnswerSurveyForm from "./AnswerSurveyForm";
+import ManageSurvey from "./ManageSurvey";
 import Survey from "@/model/Survey";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase";
@@ -31,12 +32,16 @@ export default function EditingSurvey() {
       </div>
     );
   }
+
   if (user?.email === survey.ownerEmail) {
     if (survey.status === SurveyStatus.CLOSED) {
       return <ViewResults survey={survey} />;
     }
+    if (survey.status === SurveyStatus.ACTIVE) {
+      return <ManageSurvey survey={survey} />;
+    }
     return <CreateSurvey existing={survey} />;
-  } else {
-    return <AnswerSurveyForm survey={survey} />;
   }
+
+  return <AnswerSurveyForm survey={survey} />;
 }

@@ -3,8 +3,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAuthed() {
-        return request.auth != null;
-      }
+      return request.auth != null;
+    }
 
     match /participants/{participantEmail} {
       function isTheParticipant() {
@@ -14,9 +14,9 @@ service cloud.firestore {
       allow read, write: if isTheParticipant();
 
       match /surveys/{surveyId} {
-      function isSurveyOwner() {
-        return request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
-      }
+        function isSurveyOwner() {
+          return request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+        }
         allow create: if isSurveyOwner();
         allow delete: if isSurveyOwner() || isTheParticipant();
         allow read: if isTheParticipant();
@@ -26,28 +26,26 @@ service cloud.firestore {
     match /surveys/{surveyId} {
 
       function statusWillBe(status) {
-        return  'status' in request.resource.data && request.resource.data.status == status;
+        return 'status' in request.resource.data && request.resource.data.status == status;
       }
 
       function isSentValidSurvey() {
         let fields = ["title", "description", "ownerEmail", "status"];
         return request.resource.data.keys().hasAll(fields)
-        && request.resource.data.keys().hasOnly(fields)
+          && request.resource.data.keys().hasOnly(fields);
       }
 
-      // create: read: update: delete:
-
       allow create: if isAuthed() && isSentValidSurvey()
-        && request.resource.data.ownerEmail == request.auth.token.email 
+        && request.resource.data.ownerEmail == request.auth.token.email
         && statusWillBe('pending');
 
       function hasStatus(status) {
-        return resource.data.status == status
+        return resource.data.status == status;
       }
 
       function hasOwner() {
-        return isAuthed() 
-                && resource.data.ownerEmail == request.auth.token.email;
+        return isAuthed()
+          && resource.data.ownerEmail == request.auth.token.email;
       }
 
       function isParticipant() {
@@ -55,44 +53,60 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/surveys/$(surveyId)/participants/$(request.auth.token.email));
       }
 
-      allow read, list: if hasOwner() 
+      allow read, list: if hasOwner()
         || (isParticipant() && hasStatus('active'));
 
-      allow update: if hasOwner() 
-        && ((hasStatus('pending') && (statusWillBe("pending") || statusWillBe('active')) ) || (hasStatus('active') && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status == 'closed'));
+      // Owner: pending→pending, pending→active (start() also writes extra fields), active→closed
+      // Participant: can only increment responseCount while active
+      allow update: if
+        (hasOwner() && (
+          (hasStatus('pending') && (statusWillBe('pending') || statusWillBe('active')))
+          || (hasStatus('active') && statusWillBe('closed'))
+        ))
+        || (isParticipant() && hasStatus('active')
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['responseCount']));
 
       allow delete: if hasOwner();
 
       function isOwner() {
         return isAuthed()
-                && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
+          && request.auth.token.email == get(/databases/$(database)/documents/surveys/$(surveyId)).data.ownerEmail;
       }
 
       function statusIs(status) {
-        return  get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == status;
+        return get(/databases/$(database)/documents/surveys/$(surveyId)).data.status == status;
       }
 
       match /participants/{participantEmail} {
         allow create: if isOwner() && !statusIs('closed');
-
         allow read: if isOwner() || request.auth.token.email == participantEmail;
-
         allow delete: if isOwner() || request.auth.token.email == participantEmail;
-
       }
 
       match /questions/{questionId} {
         allow read: if (isParticipant() && statusIs('active')) || isOwner();
-
         allow create, update, delete: if isOwner() && statusIs('pending');
 
         match /answers/{answerId} {
-          allow create: if (isOwner() && statusIs('pending') && request.resource.data.count == 0) || (isParticipant() && statusIs('active') && request.resource.data.count == 1);
-          allow delete: if isOwner() && statusIs('pending');
           allow read: if isOwner() && !statusIs('active');
 
-          allow update: if (isOwner() && statusIs('pending') && request.resource.data.count == 0) || (isParticipant() && statusIs('active') && request.resource.data.count - 1 == resource.data.count);
+          allow create: if
+            (isOwner() && statusIs('pending') && request.resource.data.count == 0)
+            || (isParticipant() && statusIs('active') && request.resource.data.count == 1);
+
+          allow update: if
+            (isOwner() && statusIs('pending') && request.resource.data.count == 0)
+            || (isParticipant() && statusIs('active') && request.resource.data.count - 1 == resource.data.count)
+            || (isOwner() && statusIs('active'));  // finish() applies the 3-response rule
+
+          allow delete: if isOwner() && statusIs('pending');
         }
+      }
+
+      // Intersections: owner full access; participants can increment combination counts while active
+      match /intersections/{intersectionId} {
+        allow read, write: if isOwner();
+        allow create, update: if isParticipant() && statusIs('active');
       }
     }
   }

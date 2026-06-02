@@ -10,11 +10,30 @@ import {
   getDocs,
   increment,
   runTransaction,
+  serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
-import Question from "./Question";
+import Question, { QuestionType } from "./Question";
+import Answer from "./Answer";
 import { SurveyStatus } from "./SurveyStatus";
+
+export interface Intersection {
+  id?: string;
+  label: string;
+  questionTitles: string[];
+  operator?: "and";
+  /** Combination key → count; populated on load for CLOSED surveys. */
+  counts?: Record<string, number>;
+}
+
+interface AnswerToProcess {
+  question: Question;
+  answerId: string;
+  numericValue?: number;
+  needsCreation: boolean;
+}
 
 export default class Survey implements Loadable {
   static fireCollection = "surveys";
@@ -27,6 +46,11 @@ export default class Survey implements Loadable {
 
   questions?: Question[];
   deletedQuestions: Question[] = [];
+  intersections: Intersection[] = [];
+
+  totalParticipants?: number;
+  responseCount?: number;
+  publishedAt?: Date;
 
   status: SurveyStatus = SurveyStatus.PENDING;
 
@@ -41,6 +65,7 @@ export default class Survey implements Loadable {
       this.participants = [];
       this.ownerEmail = ownerEmail ?? "";
       this.questions = [new Question()];
+      this.intersections = [];
     }
   }
 
@@ -52,10 +77,12 @@ export default class Survey implements Loadable {
     survey.ownerEmail = of.ownerEmail;
     survey.questions = of.questions;
     survey.deletedQuestions = of.deletedQuestions;
-
+    survey.intersections = of.intersections ?? [];
+    survey.totalParticipants = of.totalParticipants;
+    survey.responseCount = of.responseCount;
+    survey.publishedAt = of.publishedAt;
     survey.ref = of.ref;
     survey.loaded = of.loaded;
-
     return survey;
   }
 
@@ -92,6 +119,9 @@ export default class Survey implements Loadable {
     this.description = data.description;
     this.ownerEmail = data.ownerEmail;
     this.status = data.status;
+    this.totalParticipants = data.totalParticipants;
+    this.responseCount = data.responseCount;
+    this.publishedAt = data.publishedAt?.toDate();
     await this.loadQuestions();
 
     try {
@@ -99,6 +129,30 @@ export default class Survey implements Loadable {
     } catch {
       this.participants = [];
     }
+
+    try {
+      const intersectionsRef = collection(surveyRef, "intersections");
+      const intersectionsSnap = await getDocs(intersectionsRef);
+      this.intersections = intersectionsSnap.docs.map((d) => {
+        const counts: Record<string, number> = {};
+        for (const [key, val] of Object.entries(d.data())) {
+          if (!["label", "questionTitles", "operator"].includes(key) && typeof val === "number") {
+            counts[key] = val;
+          }
+        }
+        return {
+          id: d.id,
+          label: d.data().label ?? "",
+          questionTitles: d.data().questionTitles ?? [],
+          operator: d.data().operator,
+          counts,
+        };
+      });
+    } catch {
+      this.intersections = [];
+    }
+
+    this.loaded = true;
   }
 
   async participantsList() {
@@ -108,23 +162,114 @@ export default class Survey implements Loadable {
     return participantsSnap.docs.map((doc) => doc.id);
   }
 
+  /** Publish the survey: set ACTIVE, record participant count + timestamp, initialise intersection docs. */
   async start() {
-    if (!this.ref) throw new Error("No ref found");
-    if (!this.questions?.length) throw new Error("No questions found");
-    this.questions.forEach((question) =>
-      question.answers.forEach((answer) => {
-        answer.count = 0;
+    const surveyRef = this.ref ?? doc(db, "surveys", this.id!);
+
+    const [participantsSnap, intersectionsSnap] = await Promise.all([
+      getDocs(collection(surveyRef, "participants")),
+      getDocs(collection(surveyRef, "intersections")),
+    ]);
+
+    const totalParticipants = participantsSnap.size;
+    const storedIntersections: Intersection[] = intersectionsSnap.docs.map(
+      (d) => ({
+        id: d.id,
+        label: d.data().label ?? "",
+        questionTitles: d.data().questionTitles ?? [],
       })
     );
-    await updateDoc(this.ref, { status: SurveyStatus.ACTIVE });
+
+    const batch = writeBatch(db);
+
+    batch.update(surveyRef, {
+      status: SurveyStatus.ACTIVE,
+      publishedAt: serverTimestamp(),
+      totalParticipants,
+      responseCount: 0,
+    });
+
+    // Confirm intersection docs exist so submit() can find them
+    for (const intersection of storedIntersections) {
+      const interRef = doc(
+        collection(surveyRef, "intersections"),
+        intersection.id!
+      );
+      batch.set(
+        interRef,
+        {
+          label: intersection.label,
+          questionTitles: intersection.questionTitles,
+        },
+        { merge: true }
+      );
+    }
+
+    await batch.commit();
+    this.ref = surveyRef;
+    this.totalParticipants = totalParticipants;
   }
 
+  /**
+   * Close the survey:
+   * 1. Set answer counts 1–2 to -1 (privacy: fewer than 3 responses hidden)
+   * 2. Same for intersection combination counts
+   * 3. Delete all participants from both subcollections
+   * 4. Mark survey CLOSED
+   */
   async finish() {
     if (!this.ref) throw new Error("No ref found");
-    await updateDoc(this.ref, {
+
+    const batch = writeBatch(db);
+
+    // Apply 3-response rule to answers
+    for (const question of this.questions ?? []) {
+      if (!question.ref) continue;
+      const answersSnap = await getDocs(collection(question.ref, "answers"));
+      for (const answerDoc of answersSnap.docs) {
+        const count = answerDoc.data().count as number;
+        if (count > 0 && count < 3) {
+          batch.update(answerDoc.ref, { count: -1 });
+        }
+      }
+    }
+
+    // Apply 3-response rule to intersection combinations
+    const intersectionsSnap = await getDocs(
+      collection(this.ref, "intersections")
+    );
+    for (const interDoc of intersectionsSnap.docs) {
+      const data = interDoc.data();
+      const updates: Record<string, number> = {};
+      for (const [key, val] of Object.entries(data)) {
+        if (["label", "questionTitles", "operator"].includes(key)) continue;
+        if (typeof val === "number" && val > 0 && val < 3) {
+          updates[key] = -1;
+        }
+      }
+      if (Object.keys(updates).length > 0) {
+        batch.update(interDoc.ref, updates);
+      }
+    }
+
+    // Delete all participant entries from both subcollections
+    const participantsSnap = await getDocs(
+      collection(this.ref, "participants")
+    );
+    for (const participantDoc of participantsSnap.docs) {
+      batch.delete(participantDoc.ref);
+      batch.delete(
+        doc(db, "participants", participantDoc.id, "surveys", this.id!)
+      );
+    }
+
+    batch.update(this.ref, {
       status: SurveyStatus.CLOSED,
-      participants: [],
+      totalParticipantsAtClose:
+        this.totalParticipants ?? participantsSnap.size,
     });
+
+    await batch.commit();
   }
 
   async delete() {
@@ -138,12 +283,44 @@ export default class Survey implements Loadable {
     return [...setA].filter((x) => !setB.has(x));
   };
 
+  /** Add new participants to an ACTIVE survey without touching other state. */
+  async addParticipants(emails: string[]) {
+    if (!this.ref) throw new Error("No ref found");
+    const participantsCollectionRef = collection(this.ref, "participants");
+    const participantsCollection = collection(db, "participants");
+
+    await runTransaction(db, async (transaction) => {
+      for (const email of emails) {
+        const participantRef = doc(participantsCollectionRef, email);
+        const existing = await transaction.get(participantRef);
+        if (existing.exists() && existing.data().status) continue;
+        transaction.set(participantRef, { status: "added" });
+        transaction.set(
+          doc(collection(doc(participantsCollection, email), "surveys"), this.id!),
+          {}
+        );
+      }
+    });
+
+    if (!this.participants) this.participants = [];
+    for (const email of emails) {
+      if (!this.participants.includes(email)) this.participants.push(email);
+    }
+
+    const newCount = (this.totalParticipants ?? 0) + emails.length;
+    await updateDoc(this.ref, { totalParticipants: newCount });
+    this.totalParticipants = newCount;
+  }
+
   async save(form: FormData) {
     const title = form.get("title")?.toString() || "";
     const emails = form.get("emails")?.toString() || "";
 
     this.title = title;
-    this.participants = emails.split(",").map((email) => email.trim());
+    this.participants = emails
+      .split(",")
+      .map((email) => email.trim())
+      .filter(Boolean);
 
     try {
       const surveyRef = this.id
@@ -152,130 +329,119 @@ export default class Survey implements Loadable {
       await setDoc(surveyRef, this.firestore.data);
 
       const questionsCollectionRef = collection(surveyRef, "questions");
-
       const participants = await this.participantsList();
+
+      // Read existing intersection IDs before the transaction
+      const intersectionsRef = collection(surveyRef, "intersections");
+      const existingIntersectionsSnap = await getDocs(intersectionsRef);
+      const existingIntersectionIds = new Set(
+        existingIntersectionsSnap.docs.map((d) => d.id)
+      );
+      const newIntersectionIds = new Set(
+        this.intersections.filter((i) => i.id).map((i) => i.id!)
+      );
 
       await runTransaction(db, async (transaction) => {
         try {
+          // --- Participants ---
           const toAdd = this.difference(this.participants ?? [], participants);
           const toDelete = this.difference(
             participants,
             this.participants ?? []
           );
-
           const participantsCollectionRef = collection(
             surveyRef,
             "participants"
           );
-
-          const participantAdders = toAdd.map((participant) =>
-            transaction.get(doc(participantsCollectionRef, participant))
+          const participantAdders = toAdd.map((p) =>
+            transaction.get(doc(participantsCollectionRef, p))
           );
-          const potentialExistingParticipants = (
-            await Promise.allSettled(participantAdders)
-          ).filter((potential) => potential.status == "fulfilled");
-
+          const resolved = (await Promise.allSettled(participantAdders)).filter(
+            (r) => r.status === "fulfilled"
+          );
           const participantsCollection = collection(db, "participants");
           for (const participant of toAdd) {
             const participantRef = doc(participantsCollectionRef, participant);
             try {
-              const existingParticipant = potentialExistingParticipants.find(
-                (existing) => existing.value.id
-              )?.value;
-              if (
-                existingParticipant &&
-                existingParticipant.exists() &&
-                existingParticipant.data().status
-              )
+              const existing = resolved.find((r) => r.value.id)?.value;
+              if (existing && existing.exists() && existing.data().status)
                 continue;
               transaction.set(participantRef, { status: "added" });
-              //
-              const participantDocRef = doc(
-                participantsCollection,
-                participant
+              transaction.set(
+                doc(
+                  collection(doc(participantsCollection, participant), "surveys"),
+                  surveyRef.id
+                ),
+                {}
               );
-              const surveysSubcollectionRef = collection(
-                participantDocRef,
-                "surveys"
-              );
-              const surveyDocRef = doc(surveysSubcollectionRef, surveyRef.id);
-              transaction.set(surveyDocRef, {});
             } catch (error) {
               console.log(error);
             }
           }
           for (const participant of toDelete) {
-            const participantRef = doc(participantsCollectionRef, participant);
-            transaction.update(participantRef, { status: "removed" });
-            //
-            const participantDocRef = doc(participantsCollection, participant);
-            const surveysSubcollectionRef = collection(
-              participantDocRef,
-              "surveys"
+            transaction.update(
+              doc(participantsCollectionRef, participant),
+              { status: "removed" }
             );
-            const surveyDocRef = doc(surveysSubcollectionRef, surveyRef.id);
-            transaction.delete(surveyDocRef);
+            transaction.delete(
+              doc(
+                collection(doc(participantsCollection, participant), "surveys"),
+                surveyRef.id
+              )
+            );
           }
+
+          // --- Deleted questions ---
           if (this.ref) {
             for (const deleted of this.deletedQuestions) {
               if (deleted._title) {
-                transaction.delete(doc(surveyRef, "questions", deleted._title));
+                transaction.delete(
+                  doc(surveyRef, "questions", deleted._title)
+                );
               }
             }
           }
+
+          // --- Questions & answers ---
           for (const question of this.questions ?? []) {
+            const isRenamed =
+              question._title && question._title !== question.title;
             const questionRef = doc(
               questionsCollectionRef,
-              question._title && question._title !== question.title
-                ? question._title
-                : question.title
+              isRenamed ? question._title! : question.title!
             );
 
-            if (question._title && question._title !== question.title) {
+            if (isRenamed) {
               transaction.delete(questionRef);
-              const newQuestionRef = doc(
-                questionsCollectionRef,
-                question.title
-              );
-              transaction.set(newQuestionRef, question.firestore.data);
-
-              const answersCollectionRef = collection(
-                newQuestionRef,
-                "answers"
-              );
+              const newRef = doc(questionsCollectionRef, question.title!);
+              transaction.set(newRef, question.firestore.data);
+              const answersRef = collection(newRef, "answers");
               for (const answer of question.answers ?? []) {
-                const answerRef = doc(answersCollectionRef, answer.title);
-                transaction.set(answerRef, {
+                transaction.set(doc(answersRef, answer.title), {
                   ...answer.firestore.data,
                   count: 0,
                 });
               }
             } else {
-              const answersCollectionRef = collection(questionRef, "answers");
-
+              const answersRef = collection(questionRef, "answers");
               if (this.ref && question.answersToDelete) {
                 for (const deleted of new Set(question.answersToDelete)) {
                   if (deleted._title) {
-                    transaction.delete(
-                      doc(answersCollectionRef, deleted._title)
-                    );
+                    transaction.delete(doc(answersRef, deleted._title));
                   }
                 }
               }
               transaction.set(questionRef, question.firestore.data);
-
               for (const answer of question.answers ?? []) {
                 const hasChanged =
                   answer._title && answer._title !== answer.title;
                 const answerRef = doc(
-                  answersCollectionRef,
-                  hasChanged ? answer._title : answer.title
+                  answersRef,
+                  hasChanged ? answer._title! : answer.title
                 );
-
                 if (hasChanged) {
                   transaction.delete(answerRef);
-                  const newAnswerRef = doc(answersCollectionRef, answer.title);
-                  transaction.set(newAnswerRef, {
+                  transaction.set(doc(answersRef, answer.title), {
                     ...answer.firestore.data,
                     count: 0,
                   });
@@ -286,10 +452,41 @@ export default class Survey implements Loadable {
                   });
                 }
               }
+              // Pre-populate numeric range answers
+              if (question.isNumeric && question.hasNumericLimits) {
+                for (
+                  let i = question.numericMin!;
+                  i <= question.numericMax!;
+                  i++
+                ) {
+                  transaction.set(doc(answersRef, i.toString()), {
+                    count: 0,
+                    orderIndex: i - question.numericMin!,
+                    numericValue: i,
+                  });
+                }
+              }
             }
           }
+
+          // --- Intersections ---
+          for (const idToDelete of existingIntersectionIds) {
+            if (!newIntersectionIds.has(idToDelete)) {
+              transaction.delete(doc(intersectionsRef, idToDelete));
+            }
+          }
+          for (const intersection of this.intersections) {
+            const interRef = intersection.id
+              ? doc(intersectionsRef, intersection.id)
+              : doc(intersectionsRef);
+            transaction.set(interRef, {
+              label: intersection.label,
+              questionTitles: intersection.questionTitles,
+            });
+            if (!intersection.id) intersection.id = interRef.id;
+          }
         } catch (e) {
-          console.error("Error adding answer: ", e);
+          console.error("Error in save transaction: ", e);
         }
 
         this.ref = surveyRef;
@@ -317,21 +514,160 @@ export default class Survey implements Loadable {
   async submit(form: FormData, userEmail: string) {
     if (!this.ref) return;
     const id = this.id;
-    await runTransaction(db, async (transaction) => {
-      this.questions?.map(async (question) => {
+
+    const answersToProcess: AnswerToProcess[] = [];
+    const multiAnswers: { question: Question; answerIds: string[] }[] = [];
+    // Used for intersection key computation
+    const submittedAnswers = new Map<string, string>();
+
+    for (const question of this.questions ?? []) {
+      if (!question.ref) continue;
+
+      if (question.type === QuestionType.MULTI_CHOICE) {
+        const selected = (form.getAll(question.title!) as string[]).filter(
+          Boolean
+        );
+        if (selected.length > 0)
+          multiAnswers.push({ question, answerIds: selected });
+      } else if (question.type === QuestionType.TEXT) {
+        const raw = form.get(question.title!)?.toString();
+        if (!raw) continue;
+        const answerId = question.normalizeAnswer(raw);
+        if (!answerId) continue;
+        submittedAnswers.set(question.title!, answerId);
+        answersToProcess.push({ question, answerId, needsCreation: true });
+      } else if (question.type === QuestionType.DATE) {
         const answerId = form.get(question.title!)?.toString();
-        if (!answerId || !question.ref) return;
-        const answerRef = doc(question.ref, "answers", answerId);
-        transaction.update(answerRef, {
-          count: increment(1),
+        if (!answerId) continue;
+        submittedAnswers.set(question.title!, answerId);
+        answersToProcess.push({ question, answerId, needsCreation: true });
+      } else if (question.isNumeric) {
+        const answerId = form.get(question.title!)?.toString();
+        if (!answerId) continue;
+        const numericValue = Number(answerId);
+        if (isNaN(numericValue)) continue;
+        if (
+          question.numericMin !== undefined &&
+          numericValue < question.numericMin
+        )
+          continue;
+        if (
+          question.numericMax !== undefined &&
+          numericValue > question.numericMax
+        )
+          continue;
+        const existingAnswer = question.answers.find(
+          (a) => a.numericValue === numericValue
+        );
+        submittedAnswers.set(question.title!, answerId);
+        answersToProcess.push({
+          question,
+          answerId,
+          numericValue,
+          needsCreation: !existingAnswer,
         });
-      });
-      const participantsCollection = collection(db, "participants");
-      doc(db, "participants", userEmail);
-      const participantDocRef = doc(participantsCollection, userEmail);
-      const surveysSubcollectionRef = collection(participantDocRef, "surveys");
-      const surveyDocRef = doc(surveysSubcollectionRef, id);
-      transaction.delete(surveyDocRef);
+      } else {
+        // SINGLE_CHOICE and CHECKBOX
+        const answerId = form.get(question.title!)?.toString();
+        if (!answerId) continue;
+        const existingAnswer = question.answers.find(
+          (a) => a.title === answerId
+        );
+        submittedAnswers.set(question.title!, answerId);
+        answersToProcess.push({
+          question,
+          answerId,
+          needsCreation: !existingAnswer,
+        });
+      }
+    }
+
+    await runTransaction(db, async (transaction) => {
+      // Single-value answers
+      for (const {
+        question,
+        answerId,
+        numericValue,
+        needsCreation,
+      } of answersToProcess) {
+        if (!question.ref) continue;
+        const answersRef = collection(question.ref, "answers");
+        const answerRef = doc(answersRef, answerId);
+        if (needsCreation) {
+          const answerDoc = await transaction.get(answerRef);
+          if (answerDoc.exists()) {
+            transaction.update(answerRef, { count: increment(1) });
+          } else {
+            transaction.set(answerRef, {
+              count: 1,
+              orderIndex: question.answers.length,
+              ...(numericValue !== undefined && { numericValue }),
+            });
+          }
+        } else {
+          transaction.update(answerRef, { count: increment(1) });
+        }
+      }
+
+      // Multi-choice answers
+      for (const { question, answerIds } of multiAnswers) {
+        if (!question.ref) continue;
+        for (const answerId of answerIds) {
+          const answersRef = collection(question.ref, "answers");
+          const answerRef = doc(answersRef, answerId);
+          const existing = question.answers.find((a) => a.title === answerId);
+          if (!existing) {
+            const answerDoc = await transaction.get(answerRef);
+            if (answerDoc.exists()) {
+              transaction.update(answerRef, { count: increment(1) });
+            } else {
+              transaction.set(answerRef, {
+                count: 1,
+                orderIndex: question.answers.length,
+              });
+            }
+          } else {
+            transaction.update(answerRef, { count: increment(1) });
+          }
+        }
+      }
+
+      // Intersections — increment combination key counts
+      for (const intersection of this.intersections ?? []) {
+        if (!intersection.id || intersection.questionTitles.length < 2)
+          continue;
+        const answerValues: string[] = [];
+        let skip = false;
+        for (const qt of intersection.questionTitles) {
+          const val = submittedAnswers.get(qt);
+          // Skip if question was not answered or answer contains the delimiter
+          if (!val || val.includes("|")) {
+            skip = true;
+            break;
+          }
+          answerValues.push(val);
+        }
+        if (skip) continue;
+        const combinationKey = answerValues.join("|");
+        transaction.set(
+          doc(collection(this.ref!, "intersections"), intersection.id),
+          { [combinationKey]: increment(1) },
+          { merge: true }
+        );
+      }
+
+      // Remove participant from participants/{email}/surveys/{id}
+      transaction.delete(
+        doc(db, "participants", userEmail, "surveys", id!)
+      );
+
+      // Remove participant from surveys/{id}/participants/{email}  (Bug 4 fix)
+      transaction.delete(
+        doc(collection(this.ref!, "participants"), userEmail)
+      );
+
+      // Track response count
+      transaction.update(this.ref!, { responseCount: increment(1) });
     });
   }
 
@@ -351,9 +687,6 @@ export default class Survey implements Loadable {
     if (!question.isLocal) {
       this.deletedQuestions.push(question);
     }
-    // if (this.questions?.length === 0) {
-    //   this.questions = [new Question()];
-    // }
   }
 
   replacingQuestion(question: Question, newQuestion: Question) {
@@ -369,6 +702,13 @@ export default class Survey implements Loadable {
   deletingQuestion(question: Question) {
     const copy = this.copy;
     copy.deleteQuestion(question);
+    // Also remove the question from any intersection that referenced it
+    copy.intersections = copy.intersections.map((intersection) => ({
+      ...intersection,
+      questionTitles: intersection.questionTitles.filter(
+        (t) => t !== question.title
+      ),
+    }));
     return copy;
   }
 
@@ -388,10 +728,55 @@ export default class Survey implements Loadable {
   static async setActive(ref: DocumentReference<DocumentData, DocumentData>) {
     await updateDoc(ref, { status: SurveyStatus.ACTIVE });
   }
+
   static async setAs(
     ref: DocumentReference<DocumentData, DocumentData>,
     status: SurveyStatus
   ) {
     await updateDoc(ref, { status });
+  }
+
+  /** Create an in-memory PENDING copy of a closed survey (all counts reset to 0). */
+  static createCopy(of: Survey, ownerEmail: string): Survey {
+    const newSurvey = new Survey(undefined, ownerEmail);
+    newSurvey.title = (of.title ?? "") + " (copy)";
+    newSurvey.description = of.description;
+    newSurvey.questions =
+      of.questions?.map((q) => {
+        const newQ = new Question();
+        newQ.title = q.title;
+        newQ._title = undefined;
+        newQ.description = q.description;
+        newQ.type = q.type;
+        newQ.numericPrefix = q.numericPrefix;
+        newQ.numericSuffix = q.numericSuffix;
+        newQ.numericMin = q.numericMin;
+        newQ.numericMax = q.numericMax;
+        newQ.dateVariant = q.dateVariant;
+        newQ.dateMin = q.dateMin;
+        newQ.dateMax = q.dateMax;
+        newQ.dateFutureOnly = q.dateFutureOnly;
+        newQ.datePastOnly = q.datePastOnly;
+        newQ.textCaseSensitive = q.textCaseSensitive;
+        newQ.textMinLength = q.textMinLength;
+        newQ.textMaxLength = q.textMaxLength;
+        newQ.orderIndex = q.orderIndex;
+        newQ.answers = q.answers.map((a) => {
+          const newA = new Answer();
+          newA.title = a.title;
+          newA._title = a.title;
+          newA.count = 0;
+          newA.orderIndex = a.orderIndex;
+          return newA;
+        });
+        return newQ;
+      }) ?? [new Question()];
+    newSurvey.intersections =
+      of.intersections?.map((i) => ({
+        label: i.label,
+        questionTitles: [...i.questionTitles],
+      })) ?? [];
+    newSurvey.participants = [];
+    return newSurvey;
   }
 }

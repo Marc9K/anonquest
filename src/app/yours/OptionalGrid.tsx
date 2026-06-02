@@ -6,10 +6,12 @@ export default function OptionalGrid({
   title,
   data,
   isAdmin = false,
+  userEmail,
 }: {
   title: string;
   data?: QuerySnapshot<DocumentData, DocumentData>;
   isAdmin?: boolean;
+  userEmail?: string;
 }) {
   if (!data || !(data.docs.length > 0)) return <></>;
   return (
@@ -29,7 +31,7 @@ export default function OptionalGrid({
       <SimpleGrid gap={2} columns={[1, 2, 3]} width="100%">
         {data.docs.map((doc) => (
           <GridItem colSpan={1} key={doc.id} width="100%">
-            <SurveyLink admin={isAdmin} doc={doc} />
+            <SurveyLink admin={isAdmin} doc={doc} userEmail={userEmail} />
           </GridItem>
         ))}
       </SimpleGrid>

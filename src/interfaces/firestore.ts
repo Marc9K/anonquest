@@ -6,6 +6,10 @@ export interface FirestoreSurvey {
   ownerEmail: string;
   questions?: FirestoreQuestion[];
   status: SurveyStatus;
+  totalParticipants?: number;
+  responseCount?: number;
+  publishedAt?: unknown; // Firestore Timestamp
+  totalParticipantsAtClose?: number;
 }
 
 export interface FirestoreQuestion {
@@ -17,6 +21,13 @@ export interface FirestoreQuestion {
 export interface FirestoreAnswer {
   title: string;
   count: number;
+}
+
+export interface FirestoreIntersection {
+  label: string;
+  questionTitles: string[];
+  operator?: "and";
+  // dynamic combination keys: [key: string]: number
 }
 
 export interface Loadable {

@@ -2,23 +2,49 @@
 
 import {
   Button,
+  ButtonGroup,
   Card,
   Collapsible,
   Field,
   Fieldset,
   HStack,
   IconButton,
+  Input,
+  NativeSelect,
   Stack,
+  Switch,
+  Text,
 } from "@chakra-ui/react";
+// Chakra v3 Switch uses namespace: Switch.Root / Switch.Control / Switch.Thumb / Switch.Label
 import { useRef, useState } from "react";
 import AnswerCard from "./AnswerCard";
+import NumericQuestionConfig from "./NumericQuestionConfig";
 import FieldInput from "@/components/FieldInput";
 import FieldTextArea from "@/components/FieldTextArea";
-import Question from "@/model/Question";
+import Question, { DateVariant, QuestionType } from "@/model/Question";
+import Answer from "@/model/Answer";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { FaPlus } from "react-icons/fa6";
 import { FiDelete } from "react-icons/fi";
+
+const TYPE_LABELS: Record<QuestionType, string> = {
+  [QuestionType.SINGLE_CHOICE]: "Single",
+  [QuestionType.MULTI_CHOICE]: "Multi",
+  [QuestionType.NUMERIC]: "Numeric",
+  [QuestionType.TEXT]: "Text",
+  [QuestionType.DATE]: "Date",
+  [QuestionType.CHECKBOX]: "Checkbox",
+};
+
+const DATE_VARIANTS: DateVariant[] = [
+  "date",
+  "time",
+  "datetime",
+  "month-only",
+  "year-month",
+  "year",
+];
 
 export default function CreateQuestionCard({
   question,
@@ -50,12 +76,9 @@ export default function CreateQuestionCard({
   };
 
   const handleBlur = (e: React.FocusEvent) => {
-    // Check if the focus is moving to an element outside the card
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setShowMore(false);
     }
-
-    // Update form data
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
     const updated = question.copy;
@@ -64,12 +87,61 @@ export default function CreateQuestionCard({
     setQuestion(updated);
   };
 
-  // Split answers into always-visible and collapsible
+  const changeType = (type: QuestionType) => {
+    // Read latest title/description from the live form before switching
+    const formData = formRef.current ? new FormData(formRef.current) : null;
+    const updated = question.copy;
+    if (formData) {
+      updated.title = formData.get("title")?.toString() || updated.title || "";
+      updated.description =
+        formData.get("description")?.toString() || updated.description || "";
+    }
+    updated.type = type;
+
+    // Clear config that doesn't apply to the new type
+    if (type !== QuestionType.NUMERIC) {
+      updated.numericMin = undefined;
+      updated.numericMax = undefined;
+      updated.numericPrefix = undefined;
+      updated.numericSuffix = undefined;
+    }
+    if (type !== QuestionType.DATE) {
+      updated.dateVariant = undefined;
+      updated.dateMin = undefined;
+      updated.dateMax = undefined;
+      updated.dateFutureOnly = undefined;
+      updated.datePastOnly = undefined;
+    }
+    if (type !== QuestionType.TEXT) {
+      updated.textCaseSensitive = undefined;
+      updated.textMinLength = undefined;
+      updated.textMaxLength = undefined;
+    }
+
+    // Auto-populate Yes/No for checkbox
+    if (type === QuestionType.CHECKBOX) {
+      const yes = new Answer();
+      yes.title = "Yes";
+      yes._title = "Yes";
+      yes.orderIndex = 0;
+      const no = new Answer();
+      no.title = "No";
+      no._title = "No";
+      no.orderIndex = 1;
+      updated.answers = [yes, no];
+      updated.answersToDelete = [...question.answers];
+    } else if (!updated.hasAnswerOptions) {
+      // Non-list types: clear existing options
+      updated.answersToDelete = [...question.answers];
+      updated.answers = [];
+    }
+
+    setQuestion(updated);
+  };
+
   const alwaysVisibleAnswers = question.answers.slice(0, 3);
   const collapsibleAnswers = question.answers.slice(3);
-
   const [showMore, setShowMore] = useState(false);
-
   const padding = 5;
 
   return (
@@ -84,18 +156,12 @@ export default function CreateQuestionCard({
     >
       <form ref={formRef} data-testid={`${index}-question-card`}>
         <Fieldset.Root size="lg" maxW="md">
-          {/* {!isDragging && (
-            <Card.Header>
-              <Fieldset.Legend>Select an option</Fieldset.Legend>
-            </Card.Header>
-          )} */}
           <Fieldset.Content>
             <Card.Body>
               <Card.Title paddingBottom={padding}>
                 <HStack>
                   <FieldInput
-                    data-testid={`question-title`}
-                    // label={!isDragging ? "Question" : undefined}
+                    data-testid="question-title"
                     placeholder="Question"
                     name="title"
                     value={question.title}
@@ -110,19 +176,44 @@ export default function CreateQuestionCard({
                     aria-label="Delete question"
                     colorPalette="red"
                     variant="surface"
-                    onClick={() => {
-                      setQuestion(null);
-                    }}
+                    onClick={() => setQuestion(null)}
                   >
                     <FiDelete />
                   </IconButton>
                 </HStack>
               </Card.Title>
+
               {!isDragging && (
                 <>
+                  {/* Type selector */}
+                  <Stack
+                    paddingBottom={padding}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Field.Root>
+                      <Field.Label>Type</Field.Label>
+                    </Field.Root>
+                    <ButtonGroup size="sm" variant="outline" attached wrap="wrap">
+                      {Object.values(QuestionType).map((type) => (
+                        <Button
+                          key={type}
+                          variant={
+                            question.type === type ? "solid" : "outline"
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            changeType(type);
+                          }}
+                        >
+                          {TYPE_LABELS[type]}
+                        </Button>
+                      ))}
+                    </ButtonGroup>
+                  </Stack>
+
                   <Card.Description paddingBottom={padding}>
                     <FieldTextArea
-                      data-testid={`question-description`}
+                      data-testid="question-description"
                       placeholder="Description"
                       name="description"
                       value={question.description}
@@ -133,86 +224,237 @@ export default function CreateQuestionCard({
                       }}
                     />
                   </Card.Description>
-                  <Field.Root required>
-                    <Field.Label>Answer options</Field.Label>
-                  </Field.Root>
-                  <Stack onMouseDown={(e) => e.stopPropagation()}>
-                    {alwaysVisibleAnswers.map((answer, index) => (
-                      <AnswerCard
-                        key={index}
-                        option={answer}
-                        setOption={(option) => {
-                          if (!option) {
-                            const updatedQuestion = question.deleting(answer);
-                            setQuestion(updatedQuestion);
-                            return;
-                          }
-                          option.orderIndex = index;
-                          const updatedQuestion = question.replacing(
-                            answer,
-                            option
-                          );
-                          setQuestion(updatedQuestion);
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                  {collapsibleAnswers.length > 0 && (
-                    <>
-                      {!showMore && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowMore(true)}
-                        >
-                          ...
-                        </Button>
-                      )}
-                      <Collapsible.Root open={showMore} paddingTop="8px">
-                        <Collapsible.Content>
-                          <Stack onMouseDown={(e) => e.stopPropagation()}>
-                            {collapsibleAnswers.map((answer, i) => (
-                              <AnswerCard
-                                key={i + 3}
-                                option={answer}
-                                setOption={(option) => {
-                                  if (!option) {
-                                    const updatedQuestion =
-                                      question.deleting(answer);
-                                    setQuestion(updatedQuestion);
-                                    return;
-                                  }
-                                  option.orderIndex = i + 3;
-                                  const updatedQuestion = question.replacing(
-                                    answer,
-                                    option
-                                  );
-                                  setQuestion(updatedQuestion);
-                                }}
-                              />
-                            ))}
-                          </Stack>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowMore(false)}
+
+                  {/* Per-type config */}
+                  {question.isNumeric && (
+                    <NumericQuestionConfig
+                      question={question}
+                      onChange={setQuestion}
+                    />
+                  )}
+
+                  {question.type === QuestionType.DATE && (
+                    <Stack
+                      paddingBottom={padding}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <Field.Root>
+                        <Field.Label>Variant</Field.Label>
+                        <NativeSelect.Root>
+                          <NativeSelect.Field
+                            value={question.dateVariant ?? "date"}
+                            onChange={(e) => {
+                              const updated = question.copy;
+                              updated.dateVariant = e.target
+                                .value as DateVariant;
+                              setQuestion(updated);
+                            }}
                           >
-                            Show less
-                          </Button>
-                        </Collapsible.Content>
-                      </Collapsible.Root>
+                            {DATE_VARIANTS.map((v) => (
+                              <option key={v} value={v}>
+                                {v}
+                              </option>
+                            ))}
+                          </NativeSelect.Field>
+                          <NativeSelect.Indicator />
+                        </NativeSelect.Root>
+                      </Field.Root>
+                      <HStack>
+                        <Field.Root>
+                          <Field.Label>Min</Field.Label>
+                          <Input
+                            type="text"
+                            placeholder="e.g. 2020-01-01"
+                            value={question.dateMin ?? ""}
+                            onChange={(e) => {
+                              const updated = question.copy;
+                              updated.dateMin = e.target.value || undefined;
+                              setQuestion(updated);
+                            }}
+                          />
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Max</Field.Label>
+                          <Input
+                            type="text"
+                            placeholder="e.g. 2030-12-31"
+                            value={question.dateMax ?? ""}
+                            onChange={(e) => {
+                              const updated = question.copy;
+                              updated.dateMax = e.target.value || undefined;
+                              setQuestion(updated);
+                            }}
+                          />
+                        </Field.Root>
+                      </HStack>
+                      <HStack>
+                        <Switch.Root
+                          checked={question.dateFutureOnly ?? false}
+                          onCheckedChange={(details: { checked: boolean | "indeterminate" }) => {
+                            const on = details.checked === true;
+                            const updated = question.copy;
+                            updated.dateFutureOnly = on || undefined;
+                            updated.datePastOnly = on ? undefined : updated.datePastOnly;
+                            setQuestion(updated);
+                          }}
+                        >
+                          <Switch.HiddenInput />
+                          <Switch.Control><Switch.Thumb /></Switch.Control>
+                          <Switch.Label>Future only</Switch.Label>
+                        </Switch.Root>
+                        <Switch.Root
+                          checked={question.datePastOnly ?? false}
+                          onCheckedChange={(details: { checked: boolean | "indeterminate" }) => {
+                            const on = details.checked === true;
+                            const updated = question.copy;
+                            updated.datePastOnly = on || undefined;
+                            updated.dateFutureOnly = on ? undefined : updated.dateFutureOnly;
+                            setQuestion(updated);
+                          }}
+                        >
+                          <Switch.HiddenInput />
+                          <Switch.Control><Switch.Thumb /></Switch.Control>
+                          <Switch.Label>Past only</Switch.Label>
+                        </Switch.Root>
+                      </HStack>
+                    </Stack>
+                  )}
+
+                  {question.type === QuestionType.TEXT && (
+                    <Stack
+                      paddingBottom={padding}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <HStack>
+                        <Field.Root>
+                          <Field.Label>Min length</Field.Label>
+                          <Input
+                            type="number"
+                            value={question.textMinLength ?? ""}
+                            onChange={(e) => {
+                              const updated = question.copy;
+                              updated.textMinLength = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              setQuestion(updated);
+                            }}
+                          />
+                        </Field.Root>
+                        <Field.Root>
+                          <Field.Label>Max length</Field.Label>
+                          <Input
+                            type="number"
+                            value={question.textMaxLength ?? ""}
+                            onChange={(e) => {
+                              const updated = question.copy;
+                              updated.textMaxLength = e.target.value
+                                ? Number(e.target.value)
+                                : undefined;
+                              setQuestion(updated);
+                            }}
+                          />
+                        </Field.Root>
+                      </HStack>
+                      <Switch.Root
+                        checked={question.textCaseSensitive ?? false}
+                        onCheckedChange={(details: { checked: boolean | "indeterminate" }) => {
+                          const on = details.checked === true;
+                          const updated = question.copy;
+                          updated.textCaseSensitive = on || undefined;
+                          setQuestion(updated);
+                        }}
+                      >
+                        <Switch.HiddenInput />
+                        <Switch.Control><Switch.Thumb /></Switch.Control>
+                        <Switch.Label>Case-sensitive answers</Switch.Label>
+                      </Switch.Root>
+                    </Stack>
+                  )}
+
+                  {question.type === QuestionType.CHECKBOX && (
+                    <Text fontSize="sm" color="fg.muted" paddingBottom={padding}>
+                      Always shows Yes / No buttons — no further config needed.
+                    </Text>
+                  )}
+
+                  {/* Answer options list (single / multi only) */}
+                  {question.hasAnswerOptions && (
+                    <>
+                      <Field.Root required>
+                        <Field.Label>Answer options</Field.Label>
+                      </Field.Root>
+                      <Stack onMouseDown={(e) => e.stopPropagation()}>
+                        {alwaysVisibleAnswers.map((answer, i) => (
+                          <AnswerCard
+                            key={i}
+                            option={answer}
+                            setOption={(option) => {
+                              if (!option) {
+                                setQuestion(question.deleting(answer));
+                                return;
+                              }
+                              option.orderIndex = i;
+                              setQuestion(question.replacing(answer, option));
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                      {collapsibleAnswers.length > 0 && (
+                        <>
+                          {!showMore && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowMore(true)}
+                            >
+                              ...
+                            </Button>
+                          )}
+                          <Collapsible.Root open={showMore} paddingTop="8px">
+                            <Collapsible.Content>
+                              <Stack onMouseDown={(e) => e.stopPropagation()}>
+                                {collapsibleAnswers.map((answer, i) => (
+                                  <AnswerCard
+                                    key={i + 3}
+                                    option={answer}
+                                    setOption={(option) => {
+                                      if (!option) {
+                                        setQuestion(
+                                          question.deleting(answer)
+                                        );
+                                        return;
+                                      }
+                                      option.orderIndex = i + 3;
+                                      setQuestion(
+                                        question.replacing(answer, option)
+                                      );
+                                    }}
+                                  />
+                                ))}
+                              </Stack>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowMore(false)}
+                              >
+                                Show less
+                              </Button>
+                            </Collapsible.Content>
+                          </Collapsible.Root>
+                        </>
+                      )}
                     </>
                   )}
                 </>
               )}
             </Card.Body>
-            {!isDragging && (
+
+            {!isDragging && question.hasAnswerOptions && (
               <Card.Footer justifyContent="flex-end">
                 <IconButton
                   aria-label="Add an option"
                   onClick={() => {
-                    const updated = question.addingOption();
-                    setQuestion(updated);
+                    setQuestion(question.addingOption());
                     setShowMore(true);
                   }}
                   disabled={question.hasVacantOption}

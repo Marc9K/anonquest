@@ -6,15 +6,18 @@ export default class Answer {
   _title?: string;
   count: number;
   orderIndex: number = 0;
+  numericValue?: number;
 
   constructor(
     doc?: QueryDocumentSnapshot<DocumentData, DocumentData>,
-    title?: string
+    title?: string,
+    numericValue?: number
   ) {
     this.title = doc?.id ?? title ?? "";
     this._title = doc?.id ?? title ?? "";
     this.count = doc?.data().count ?? 0;
     this.orderIndex = doc?.data().orderIndex ?? 0;
+    this.numericValue = doc?.data().numericValue ?? numericValue;
   }
 
   equals(other: Answer) {
@@ -25,6 +28,7 @@ export default class Answer {
     const copy = new Answer();
     copy.title = title;
     copy.orderIndex = this.orderIndex;
+    copy.numericValue = this.numericValue;
     return copy;
   }
 
@@ -34,6 +38,7 @@ export default class Answer {
     copy._title = this._title;
     copy.count = this.count;
     copy.orderIndex = this.orderIndex;
+    copy.numericValue = this.numericValue;
     return copy;
   }
 
@@ -43,6 +48,7 @@ export default class Answer {
       data: {
         count: this.count,
         orderIndex: this.orderIndex,
+        numericValue: this.numericValue,
       },
     };
   }
